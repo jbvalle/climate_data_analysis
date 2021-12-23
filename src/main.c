@@ -5,17 +5,17 @@ int main(void){
 
     FILE *input = fopen("input.csv","r");
 
-    char *token, input_argument[60], notch_argument[2] = ";";
+    char *input_argument, temp[60], notch_argument[2] = ";";
 
     //Liest 17 Zeilen bis zu Beginn der Datensätze
-    for(int i = 0; i < 17; i++)fgets(input_argument,60,input);
+    for(int i = 0; i < 17; i++)fgets(temp,60,input);
 
-    token = strtok(input_argument,notch_argument);
+    input_argument = strtok(temp,notch_argument);
 
-    while(token != NULL){
+    while(input_argument != NULL){
 
-        printf("%s \n", token);
-        token = strtok(NULL,notch_argument);
+        printf("%s \n", input_argument);
+        input_argument = strtok(NULL,notch_argument);
     }
     return 0;
 }
