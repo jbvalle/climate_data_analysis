@@ -1,0 +1,25 @@
+# dataset: HOMSTART
+# parameter: tmin, unit: °C
+# parameter: tmax, unit: °C
+# parameter:   rr, unit: mm
+# source: http://www.zamg.ac.at/histalp
+# csv-generated: 2021-12-23T14:44:17Z
+# station: Bad Aussee
+# abbr: BAU
+# country_code: AT
+# longitude: 13.7822
+# latitude: 47.6114
+# height: 670.0
+# height-unit: m
+# missing-value: NULL
+#--------------------------------------
+datum;tmin;tmax;rr
+1957-05-02;2.3;12.6;153
+1957-05-03;8.3;11.1;486
+1957-05-04;5.3;11.3;456
+1957-05-05;1.3;7.5;321
+1957-05-06;0.3;2.6;123
+1957-05-07;1.3;2.5;456
+1957-05-08;4.5;9.1;456
+1957-05-09;3.9;15.1;876
+
