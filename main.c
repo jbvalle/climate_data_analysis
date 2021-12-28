@@ -108,6 +108,8 @@ void filter_tmin(cdatas_t *cdata, int number_datasets,int *min, int *max){
         }
     }
 }*/
+
+
 void filter_tmin(cdatas_t *cdata,int chosen_t_min, int number_datasets)
 {
     for(int i = 0; i <= number_datasets; i++)
@@ -130,12 +132,11 @@ void filter_tmax(cdatas_t *cdata,int chosen_t_max, int number_datasets)
     }
 }
 
-
 int main(void){
     
     //Filter Parameters
-    //int tmin_min = 0;
-    //int tmin_max = 8;
+    int tmin_min = 0;
+    int tmin_max = 8;
 
 
     //----------------
@@ -153,21 +154,18 @@ int main(void){
     //Parse dataset arguments to array of structs
     input = fopen("input.csv","r");
     parse_input_to_struct(input, cdata, padding);
-
-
-    
     //Show Datasets
+    /*
     for(int i = 0; i <= number_datasets; i++){
 
         printf("%15s %5lf %5lf %5lf\n",cdata[i].datum, cdata[i].t_min,cdata[i].t_max, cdata[i].niederschlag);
     }
 
-    printf("\n\n\n");
+    printf("\n\n\n");*/
 
-
-    //filter_tmin(cdata, number_datasets, &tmin_min, &tmin_max);
+    filter_tmin(cdata, number_datasets, &tmin_min, &tmin_max);
     //filter_tmin(cdata, 4, number_datasets);
-    filter_tmax(cdata, 10, number_datasets);
+    //filter_tmax(cdata, 20, number_datasets);
 
     free(cdata);
     return 0;
