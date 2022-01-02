@@ -61,14 +61,15 @@ void parse_input_to_struct(FILE *input, cdatas_t *cdata, int padding){
                 case 0:
                 {
                     //Einlesen vom Datum in 2 temporäre char pointer
-                    char *pread = input_argument;
+                    char *pread  = input_argument;
                     char *pwrite = input_argument;
-                    int x = 0;
+                    int x = 0;//y = 0;
                     //Ueberschreibt pwrite mit jedem zeichen von pread solange
                     //es nicht mit '-' uebereinstimmt 
                     while(*pread){
-
+                        //pwrite[x] = pread[y++]
                         *(pwrite + x) = *pread++;
+                        //x = x + (logische Aussage)
                         x += (*(pwrite + x) != '-');
                     }
                     *(pwrite + x) = '\0';
@@ -101,6 +102,7 @@ void parse_input_to_struct(FILE *input, cdatas_t *cdata, int padding){
     //Input_arguments freigeben
     free(input_argument);
 }
+
 
 void filter_tmin(cdatas_t *cdata, int number_datasets, int filter_methode, double t_min_limit1, double t_min_limit2)
 {
@@ -223,14 +225,61 @@ void filter_niederschlag(cdatas_t *cdata, int number_datasets, int filter_method
     }
 }
 
+void filter_datum(cdatas_t *cdata, int number_datasets, int filter_methode, int datum_limit1, int datum_limit2)
+{
+    switch(filter_methode){
+        case 0:
+            for(int i = 0; i <= number_datasets; i++)
+            {
+                if(cdata[i].datum < datum_limit1)
+                {
+                    printf("%15d %5lf %5lf %5lf\n",cdata[i].datum, cdata[i].t_min,cdata[i].t_max, cdata[i].niederschlag);
+                }
+            }
+            break;
+
+        case 1:
+            for(int i = 0; i <= number_datasets; i++)
+            {
+                if(cdata[i].datum > datum_limit1)
+                {
+                    printf("%15d %5lf %5lf %5lf\n",cdata[i].datum, cdata[i].t_min,cdata[i].t_max, cdata[i].niederschlag);
+                }
+            }
+            break;
+
+        case 2:
+            //int avrg = 0;
+            //int zeitraum = 0;
+            for(int i = 0; i <= number_datasets; i++)
+            {
+                if((cdata[i].datum >= datum_limit1)&&(cdata[i].datum <= datum_limit2))
+                {
+                    //zeitraum++;
+                    printf("%15d %5lf %5lf %5lf\n",cdata[i].datum, cdata[i].t_min,cdata[i].t_max, cdata[i].niederschlag);
+                    //avrg = avrg + cdata[i].niederschlag;
+                }
+            }
+            
+            //avrg = avrg / zeitraum;
+            //printf(Der Mittel von Zeitraum: XX -YYY : %d,avrg);
+            break;
+
+        default:
+            printf("ERROR: filter_tmin: invalid filter methode");
+            break;
+    }
+}
+
+void show_data(cdatas_t *cdata, int number_datasets){
+
+    for(int i = 0; i <= number_datasets; i++)
+    {
+        printf("%15d %5lf %5lf %5lf\n",cdata[i].datum, cdata[i].t_min,cdata[i].t_max, cdata[i].niederschlag);
+    }
+}
 int main(void){
     
-    //Filter Parameters
-    int tmin_min = 0;
-    int tmin_max = 8;
-
-
-    //----------------
     FILE *input;
     int number_datasets = 0, padding = 16;
     //determine number of datasets -> number_datasets
@@ -246,9 +295,13 @@ int main(void){
     input = fopen("input.csv","r");
     parse_input_to_struct(input, cdata, padding);
 
-    filter_niederschlag(cdata, number_datasets, 2, 10, 30);
+    filter_datum(cdata, number_datasets, 2, 19480201, 19480230);
     //filter_tmax(cdata, number_datasets, 2, 10, 30);
-
+    //filter_tmin(cdata, number_datasets, 2, 10, 30);
+    //filter_niederschlag(cdata, number_datasets, 2, 10, 30);
+    
+    //show_data(cdata, number_datasets);
     free(cdata);
     return 0;
 }
+
