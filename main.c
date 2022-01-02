@@ -4,7 +4,7 @@
 
 typedef struct {
 
-    char datum[15];
+    int datum;
     double t_min;
     double t_max;
     double niederschlag;
@@ -59,8 +59,25 @@ void parse_input_to_struct(FILE *input, cdatas_t *cdata, int padding){
             switch(j){
 
                 case 0:
-                    strcpy(cdata[i].datum,input_argument);
+                {
+                    //Einlesen vom Datum in 2 temporäre char pointer
+                    char *pread = input_argument;
+                    char *pwrite = input_argument;
+                    int x = 0;
+                    //Ueberschreibt pwrite mit jedem zeichen von pread solange
+                    //es nicht mit '-' uebereinstimmt 
+                    while(*pread){
+
+                        *(pwrite + x) = *pread++;
+                        x += (*(pwrite + x) != '-');
+                    }
+                    *(pwrite + x) = '\0';
+                    
+                    //Umwandeln vom Datum in ein int
+                    cdata[i].datum = strtol(pwrite,NULL,10);
                     break;
+                }
+
                 case 1:
                     cdata[i].t_min = strtod(input_argument,NULL);
                     break;
@@ -85,50 +102,124 @@ void parse_input_to_struct(FILE *input, cdatas_t *cdata, int padding){
     free(input_argument);
 }
 
-
-//void filter_datum(cdatas_t *cdata, int number_datasets,int minimum, int maximum);
-//void filter_tmax(cdatas_t *cdata, int number_datasets,int minimum, int maximum);
-//void filter_niederschlag(cdatas_t *cdata, int number_datasets,int minimum, int maximum);
-
-/*
-void filter_tmin(cdatas_t *cdata, int number_datasets,int *min, int *max){
-    
-    int *min_cmp = (int*)malloc(sizeof(int));
-    int *max_cmp = (int*)malloc(sizeof(int));
-
-    *min_cmp = (min == NULL) ? 0 : *min;
-    *max_cmp = (max == NULL) ? 0 : *max;
-
-    for(int i = 0; i <= number_datasets; i++){
-
-        if(((cdata[i].t_min > *min_cmp) || !min) && ((cdata[i].t_min < *max_cmp)||!max) ){
-
-
-            printf("%15s %5lf %5lf %5lf\n",cdata[i].datum, cdata[i].t_min,cdata[i].t_max, cdata[i].niederschlag);
-        }
-    }
-}*/
-
-
-void filter_tmin(cdatas_t *cdata,int chosen_t_min, int number_datasets)
+void filter_tmin(cdatas_t *cdata, int number_datasets, int filter_methode, double t_min_limit1, double t_min_limit2)
 {
-    for(int i = 0; i <= number_datasets; i++)
-    {
-        if(cdata[i].t_min < chosen_t_min)
-        {
-            printf("%15s %5lf %5lf %5lf\n",cdata[i].datum, cdata[i].t_min,cdata[i].t_max, cdata[i].niederschlag);
-        }
+
+    switch(filter_methode){
+        case 0:
+            for(int i = 0; i <= number_datasets; i++)
+            {
+                if(cdata[i].t_min < t_min_limit1)
+                {
+                    printf("%15d %5lf %5lf %5lf\n",cdata[i].datum, cdata[i].t_min,cdata[i].t_max, cdata[i].niederschlag);
+                }
+            }
+            break;
+
+        case 1:
+            for(int i = 0; i <= number_datasets; i++)
+            {
+                if(cdata[i].t_min > t_min_limit1)
+                {
+                    printf("%15d %5lf %5lf %5lf\n",cdata[i].datum, cdata[i].t_min,cdata[i].t_max, cdata[i].niederschlag);
+                }
+            }
+            break;
+
+        case 2:
+            for(int i = 0; i <= number_datasets; i++)
+            {
+                if((cdata[i].t_min > t_min_limit1)&&(cdata[i].t_min < t_min_limit2))
+                {
+                    printf("%15d %5lf %5lf %5lf\n",cdata[i].datum, cdata[i].t_min,cdata[i].t_max, cdata[i].niederschlag);
+                }
+            }
+            break;
+
+        default:
+            printf("ERROR: filter_tmin: invalid filter methode");
+            break;
     }
 }
 
-void filter_tmax(cdatas_t *cdata,int chosen_t_max, int number_datasets)
+
+void filter_tmax(cdatas_t *cdata, int number_datasets, int filter_methode, double t_max_limit1, double t_max_limit2)
 {
-    for(int i = 0; i <= number_datasets; i++)
-    {
-        if(cdata[i].t_max > chosen_t_max)
-        {
-            printf("%15s %5lf %5lf %5lf\n",cdata[i].datum, cdata[i].t_min,cdata[i].t_max, cdata[i].niederschlag);
-        }
+
+    switch(filter_methode){
+        case 0:
+            for(int i = 0; i <= number_datasets; i++)
+            {
+                if(cdata[i].t_max < t_max_limit1)
+                {
+                    printf("%15d %5lf %5lf %5lf\n",cdata[i].datum, cdata[i].t_min,cdata[i].t_max, cdata[i].niederschlag);
+                }
+            }
+            break;
+
+        case 1:
+            for(int i = 0; i <= number_datasets; i++)
+            {
+                if(cdata[i].t_max > t_max_limit1)
+                {
+                    printf("%15d %5lf %5lf %5lf\n",cdata[i].datum, cdata[i].t_min,cdata[i].t_max, cdata[i].niederschlag);
+                }
+            }
+            break;
+
+        case 2:
+            for(int i = 0; i <= number_datasets; i++)
+            {
+                if((cdata[i].t_max > t_max_limit1)&&(cdata[i].t_max < t_max_limit2))
+                {
+                    printf("%15d %5lf %5lf %5lf\n",cdata[i].datum, cdata[i].t_min,cdata[i].t_max, cdata[i].niederschlag);
+                }
+            }
+            break;
+
+        default:
+            printf("ERROR: filter_tmin: invalid filter methode");
+            break;
+    }
+}
+
+void filter_niederschlag(cdatas_t *cdata, int number_datasets, int filter_methode, double niederschlag_limit1, double niederschlag_limit2)
+{
+
+    switch(filter_methode){
+        case 0:
+            for(int i = 0; i <= number_datasets; i++)
+            {
+                if(cdata[i].niederschlag < niederschlag_limit1)
+                {
+                    printf("%15d %5lf %5lf %5lf\n",cdata[i].datum, cdata[i].t_min,cdata[i].t_max, cdata[i].niederschlag);
+                }
+            }
+            break;
+
+        case 1:
+            for(int i = 0; i <= number_datasets; i++)
+            {
+                if(cdata[i].niederschlag > niederschlag_limit1)
+                {
+                    printf("%15d %5lf %5lf %5lf\n",cdata[i].datum, cdata[i].t_min,cdata[i].t_max, cdata[i].niederschlag);
+                }
+            }
+            break;
+
+        case 2:
+            for(int i = 0; i <= number_datasets; i++)
+            {
+                if((cdata[i].niederschlag > niederschlag_limit1)&&(cdata[i].niederschlag < niederschlag_limit2))
+                {
+                    printf("%15d %5lf %5lf %5lf\n",cdata[i].datum, cdata[i].t_min,cdata[i].t_max, cdata[i].niederschlag);
+                }
+            }
+            break;
+
+        default:
+            printf("ERROR: filter_tmin: invalid filter methode");
+            break;
     }
 }
 
@@ -154,18 +245,9 @@ int main(void){
     //Parse dataset arguments to array of structs
     input = fopen("input.csv","r");
     parse_input_to_struct(input, cdata, padding);
-    //Show Datasets
-    /*
-    for(int i = 0; i <= number_datasets; i++){
 
-        printf("%15s %5lf %5lf %5lf\n",cdata[i].datum, cdata[i].t_min,cdata[i].t_max, cdata[i].niederschlag);
-    }
-
-    printf("\n\n\n");*/
-
-    filter_tmin(cdata, number_datasets, &tmin_min, &tmin_max);
-    //filter_tmin(cdata, 4, number_datasets);
-    //filter_tmax(cdata, 20, number_datasets);
+    filter_niederschlag(cdata, number_datasets, 2, 10, 30);
+    //filter_tmax(cdata, number_datasets, 2, 10, 30);
 
     free(cdata);
     return 0;
