@@ -35,7 +35,7 @@ int process_input(FILE *input, int number_datasets, int padding){
         //zum bestimmen der climate_datasetssatzanzahl
         number_datasets++;
     }
-    number_datasets = number_datasets -  padding - 1; 
+    number_datasets = number_datasets -  padding; 
 
     return number_datasets;
 }
@@ -45,7 +45,7 @@ void reset_temp(char *temp, int length){
     for(int i = 0; i < length; i++)temp[i] = '\0';
 }
 
-void parse_input_to_struct(FILE *input, cdatas_t *cdata, int padding){
+void parse_input_to_struct(FILE *input, cdatas_t *cdata, int number_datasets,int padding){
     
     //Notch_argument -> Zeichen bei dem der String zerteilt wird
     //bei ; und bei NEWLINE am ende der Zeile
@@ -61,7 +61,7 @@ void parse_input_to_struct(FILE *input, cdatas_t *cdata, int padding){
 
     //fgets liest input stream und überschreibt temp-array der laenge von temp
     //Wenn NULL -> END OF FILE -> Dann beende die Schleife
-    for(int i = 0; fgets(temp,sizeof(temp),input) != NULL; i++){
+    for(int i = 0; (fgets(temp,sizeof(temp),input) != NULL)&&(i < number_datasets); i++){
 
         //Ein Argument einer Datensatzzeile wird bis ';' oder '\n' auf input_argument übergeben
         input_argument = strtok(temp,seperator);
@@ -89,6 +89,7 @@ void parse_input_to_struct(FILE *input, cdatas_t *cdata, int padding){
                     
                     //Umwandeln vom Datum in ein int
                     cdata[i].datum = strtol(pwrite,NULL,10);
+
                     break;
                 }
 
@@ -408,7 +409,7 @@ void filter_datum(cdatas_t *cdata, int *number_datasets, int filter_methode, int
 
     switch(filter_methode){
         case 0:
-            for(int i = 0; i <= *number_datasets; i++)
+            for(int i = 0; i < *number_datasets; i++)
             {
                 if(cdata[i].datum < datum_limit1)
                 {
@@ -434,7 +435,7 @@ void filter_datum(cdatas_t *cdata, int *number_datasets, int filter_methode, int
             break;
 
         case 1:
-            for(int i = 0; i <= *number_datasets; i++)
+            for(int i = 0; i < *number_datasets; i++)
             {
                 if(cdata[i].datum > datum_limit1)
                 {
@@ -462,7 +463,7 @@ void filter_datum(cdatas_t *cdata, int *number_datasets, int filter_methode, int
         case 2:
             //int avrg = 0;
             //int zeitraum = 0;
-            for(int i = 0; i <= *number_datasets; i++)
+            for(int i = 0; i < *number_datasets; i++)
             {
                 if((cdata[i].datum >= datum_limit1)&&(cdata[i].datum <= datum_limit2))
                 {
@@ -503,7 +504,7 @@ void filter_datum(cdatas_t *cdata, int *number_datasets, int filter_methode, int
             //Wenn datum_limit2 gleich 0 ist dann state = 1 -> equivalent mit if(1) datum wird nicht beachtet
             state = (datum_limit2 != 0) ? 0 : 1;
 
-            for(int i = *number_datasets - datum_limit1 + 1; i <= *number_datasets; i++)
+            for(int i = *number_datasets - datum_limit1 + 1; i < *number_datasets; i++)
             {
                 if((cdata[i].datum <= datum_limit2)||state)
                 {
@@ -540,7 +541,7 @@ void filter_datum(cdatas_t *cdata, int *number_datasets, int filter_methode, int
     }
 }
 
-void show_data(cdatas_t *cdata, int number_datasets){
+int show_data(cdatas_t *cdata, int number_datasets){
 
     char *token, letter, buff[50];
     int input[] = {0,0,0,0};
@@ -575,6 +576,16 @@ void show_data(cdatas_t *cdata, int number_datasets){
 
         token = strtok(NULL," ,\n\t");
     }
+    
+    //Ueberpruefen der eingabe
+    int x;
+    for(x = 0; x < 4; x++)if(input[x] == 1)break;
+    //Wenn keines der Optionen gewaehlt wurde returniere -1 zur fehlerbehandlung
+    if(x == 4){
+
+        printf("\033[1;31m");printf("\n\nERROR: Bitte geben sie eines der vorgegebenen Eingabeoptionen ein!\n\n");printf("\033[0m");
+        return -1;
+    }
 
     for(int i = 0; i <= number_datasets; i++)
     {
@@ -589,14 +600,15 @@ void show_data(cdatas_t *cdata, int number_datasets){
         if(input[3])printf("%04.1lf  ", cdata[i].niederschlag);
         printf("\n");
     }
+
+    free(token);
+    return 0;
 }
 
-void request_datum_args(filter_args_t *args){
+int request_datum_args(filter_args_t *args){
 
     
-    char *token, letter, buff[50], key[5];
-    //Input dient zur fall unterscheidung und zur "aktivierung" der auswahloption
-    int input[] = {0,0,0,0};
+    char letter, buff[50], key[5];
     //Variablen fuer die eingabe eines zeitraums
     int dd1,mm1,yy1;
     int dd2,mm2,yy2;
@@ -641,6 +653,7 @@ void request_datum_args(filter_args_t *args){
         //mm,dd,yy in das format YYYYMMDD umwandeln
         args[0].arg1 = (yy1 * 10000 + mm1 * 100 + dd1);
         args[0].arg2 = (yy2 * 10000 + mm2 * 100 + dd2);
+        return 0;
     }
 
 
@@ -652,6 +665,7 @@ void request_datum_args(filter_args_t *args){
         args[0].method = 0;
         //mm,dd,yy in das format YYYYMMDD umwandeln
         args[0].arg1 = (yy1 * 10000 + mm1 * 100 + dd1);
+        return 0;
     }
 
     if(strcmp(key, "ab")   ==0){
@@ -661,6 +675,7 @@ void request_datum_args(filter_args_t *args){
         args[0].method = 1;
         //mm,dd,yy in das format YYYYMMDD umwandeln
         args[0].arg1 = (yy1 * 10000 + mm1 * 100 + dd1);
+        return 0;
     }
 
     if(strcmp(key, "1.")==0){
@@ -673,6 +688,7 @@ void request_datum_args(filter_args_t *args){
         args[0].arg1 = last_x_days;
         //zweites argument wichtig! Ansonsten erwartet das Programm ein limit2
         args[0].arg2 = 0;
+        return 0;
     }
 
     if(strcmp(key, "2.")==0){
@@ -686,10 +702,15 @@ void request_datum_args(filter_args_t *args){
         args[0].arg1 = last_x_days;
         //zweites argument wichtig! Ansonsten erwartet das Programm ein limit2
         args[0].arg2 = (yy1 * 10000 + mm1 * 100 + dd1);
+        return 0;
     }
+
+    //Falls keine Eingabe mit eines der Schlüsselwoerter uebereinstimmt returniere ERROR
+    printf("\033[1;31m");printf("\n\nERROR: Bitte geben sie eines der vorgegebenen Eingabeoptionen ein!\n\n");printf("\033[0m");
+    return -1;
 }
 
-void get_input(filter_args_t *args, int *filter_option){
+int get_input(filter_args_t *args, int *filter_option){
 
     char *token, letter, buff[50];
 
@@ -712,57 +733,97 @@ void get_input(filter_args_t *args, int *filter_option){
     
     token = strtok(buff," ,\n\t");
     
-    while(token != NULL){
+    //Eingabe der Filtergrenzwerte ueberpruefen
+    int validity = -1;
+
+    while(validity != 0){
 
         if(strcmp(token,"datum")==0){
             //Auffüllen der Parameter Daten mit Datum Filter Werten
             filter_option[0] = 1;
-            request_datum_args(args);
+            validity = request_datum_args(args);
         }
-        if(strcmp(token,"t_min")==0)filter_option[1] = 1;
-        if(strcmp(token,"t_max")==0)filter_option[2] = 1;
-        if(strcmp(token,"niederschlag")==0)filter_option[3] = 1;
+        if(strcmp(token,"t_min")==0){
+            filter_option[1] = 1;
+        }
+        
+        if(strcmp(token,"t_max")==0){
+            filter_option[2] = 1;
+        }
 
-        token = strtok(NULL," ,\n\t");
+        if(strcmp(token,"niederschlag")==0){
+            filter_option[3] = 1;
+        }
+
+        //Eingabe auf richtigkeit ueberpruefen
+        int i;
+        for(i = 0; i < 4; i++){
+            if(filter_option[i] == 1)break;
+        }
+
+        if(i == 4){
+
+            printf("\033[1;31m");printf("\n\nERROR: Bitte geben sie eines der vorgegebenen Eingabeoptionen ein!\n\n");printf("\033[0m");
+            return -1;
+        }
     }
+    while((token = strtok(NULL, " ,\n\t"))!=NULL);
+    free(token);
 
-
+    return 0;
 }
 
 
 int main(void){
     
-    //Filteroptionen dient der "aktivierung" der filter
-    int filter_option[4] = {0,0,0,0};
     FILE *input;
-    int number_datasets = 0, padding = 16;
-    //determine number of datasets -> number_datasets
+    cdatas_t *cdata;
+    filter_args_t *args;
+
+    int number_datasets = 0, padding = 15;
+
+    //Filteroptionen dient der "aktivierung" der filter von Datum | T_MIN | T_MAX | Niederschlag
+    int filter_option[4] = {0,0,0,0};
+
+run:
+    //Inputstream von der CSV datei erzeugen
     input = fopen("input.csv","r");
 
     //Anzahl Datensaetze ermitteln
     number_datasets = process_input(input, number_datasets,padding);
     
     //Allocate Pointer of size number_datasets
-    cdatas_t *cdata = (cdatas_t *)malloc(number_datasets * sizeof(cdatas_t));
+    cdata = (cdatas_t *)malloc(number_datasets * sizeof(cdatas_t));
 
     //Initialize input param variables
-    filter_args_t *args = (filter_args_t *)malloc(4 * sizeof(filter_args_t));
-    int filter_options[4] = {0,0,0,0};
-    
-    //Parse dataset arguments to array of structs
+    args = (filter_args_t *)malloc(4 * sizeof(filter_args_t));
+            
+    //Uebertragen der Datensaetze vom input stream in das struct array
     input = fopen("input.csv","r");
-    parse_input_to_struct(input, cdata, padding);
+    parse_input_to_struct(input, cdata, number_datasets,padding);
 
-    get_input(args, filter_option);
+    //Wenn User eingabe Korrekt dann get_input() == 0
+    //Bei ungueltiger Eingabe Return wert -1 -> wiederhole Eingabe aufforderung
+    while(get_input(args, filter_option) != 0);
 
     if(filter_option[0])filter_datum(cdata, &number_datasets, args[0].method, args[0].arg1, args[0].arg2);
     //if(filter_option[1])filter_tmax(cdata, &number_datasets, 1, 8, 30);
     //if(filter_option[2])filter_tmin(cdata, &number_datasets, 1, 3, 30);
     //if(filter_option[3])filter_niederschlag(cdata, &number_datasets, 1, 5, 30);
     
-    show_data(cdata, number_datasets);
+    //Wiederhole die Anfrage solange bis return wert 0 bei gueltiger eingabe
+    while(show_data(cdata, number_datasets)!=0);
+
+    printf("\033[1;31m");printf("\n\nMoechten Sie die Anwendung wiederholen? (y/n)\n\n");
+    printf("\033[0m");
 
     free(cdata);
+    free(args);
+    fclose(input);
+    
+
+goto run;
+
     return 0;
 }
 
