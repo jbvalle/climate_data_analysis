@@ -126,7 +126,7 @@ void filter_tmin(cdatas_t *cdata, int *number_datasets, int filter_methode, doub
 
     switch(filter_methode){
         case 0:
-            for(int i = 0 ; i <= *number_datasets; i++)
+            for(int i = 0 ; i < *number_datasets; i++)
             {
                 if(cdata[i].t_min < t_min_limit1)
                 {
@@ -154,7 +154,7 @@ void filter_tmin(cdatas_t *cdata, int *number_datasets, int filter_methode, doub
             break;
 
         case 1:
-            for(int i = 0; i <= *number_datasets; i++)
+            for(int i = 0; i < *number_datasets; i++)
             {
                 if(cdata[i].t_min > t_min_limit1)
                 {
@@ -179,7 +179,7 @@ void filter_tmin(cdatas_t *cdata, int *number_datasets, int filter_methode, doub
             break;
 
         case 2:
-            for(int i = 0; i <= *number_datasets; i++)
+            for(int i = 0; i < *number_datasets; i++)
             {
                 if((cdata[i].t_min > t_min_limit1)&&(cdata[i].t_min < t_min_limit2))
                 {
@@ -220,7 +220,7 @@ void filter_tmax(cdatas_t *cdata, int *number_datasets, int filter_methode, doub
 
     switch(filter_methode){
         case 0:
-            for(int i = 0; i <= *number_datasets; i++)
+            for(int i = 0; i < *number_datasets; i++)
             {
                 //Wenn Daten mit Filter übereinstimmen überschreiben der alten datensätze durch verschieben
                 if(cdata[i].t_max < t_max_limit1)
@@ -249,7 +249,7 @@ void filter_tmax(cdatas_t *cdata, int *number_datasets, int filter_methode, doub
             break;
 
         case 1:
-            for(int i = 0; i <= *number_datasets; i++)
+            for(int i = 0; i < *number_datasets; i++)
             {
                 if(cdata[i].t_max > t_max_limit1)
                 {
@@ -275,7 +275,7 @@ void filter_tmax(cdatas_t *cdata, int *number_datasets, int filter_methode, doub
             break;
 
         case 2:
-            for(int i = 0; i <= *number_datasets; i++)
+            for(int i = 0; i < *number_datasets; i++)
             {
                 if((cdata[i].t_max > t_max_limit1)&&(cdata[i].t_max < t_max_limit2))
                 {
@@ -316,7 +316,7 @@ void filter_niederschlag(cdatas_t *cdata, int *number_datasets, int filter_metho
 
     switch(filter_methode){
         case 0:
-            for(int i = 0; i <= *number_datasets; i++)
+            for(int i = 0; i < *number_datasets; i++)
             {
                 if(cdata[i].niederschlag < niederschlag_limit1)
                 {
@@ -342,7 +342,7 @@ void filter_niederschlag(cdatas_t *cdata, int *number_datasets, int filter_metho
             break;
 
         case 1:
-            for(int i = 0; i <= *number_datasets; i++)
+            for(int i = 0; i < *number_datasets; i++)
             {
                 if(cdata[i].niederschlag > niederschlag_limit1)
                 {
@@ -368,7 +368,7 @@ void filter_niederschlag(cdatas_t *cdata, int *number_datasets, int filter_metho
             break;
 
         case 2:
-            for(int i = 0; i <= *number_datasets; i++)
+            for(int i = 0; i < *number_datasets; i++)
             {
                 if((cdata[i].niederschlag > niederschlag_limit1)&&(cdata[i].niederschlag < niederschlag_limit2))
                 {
@@ -541,10 +541,21 @@ void filter_datum(cdatas_t *cdata, int *number_datasets, int filter_methode, int
     }
 }
 
-int show_data(cdatas_t *cdata, int number_datasets){
+int show_data(cdatas_t *cdata, int number_datasets, int total_runs){
 
-    char *token, letter, buff[50];
+    
+    char *token, letter, buff[50], total_runs_str[3];
     int input[] = {0,0,0,0};
+
+    //Create File Stream according to number of program executions
+    sprintf(total_runs_str, "%d", total_runs);
+    char filename[50] = "climate_analysis_output";
+    //filename <- anzahl durchlaeufe
+    strcat(filename,total_runs_str);
+    //filename <- .txt anhaengen
+    strcat(filename,".txt");
+
+    FILE *output_f = fopen(filename,"wb+");
 
     //Initialisiere input buffer -> Benutzer eingabe
     for(int i = 0; i < 50; i++)buff[i] = '\0';
@@ -594,16 +605,33 @@ int show_data(cdatas_t *cdata, int number_datasets){
             int mm = ((int)cdata[i].datum - (yy * 10000)) / 100;
             int dd = ((int)cdata[i].datum - (yy * 10000) - (mm * 100));
             printf("%02d-%02d-%4d  ", dd, mm, yy);
+            //Ausgabe ins outputfile
+            fprintf(output_f,"%02d-%02d-%4d  ", dd, mm, yy);
         }
-        if(input[1])printf("%04.1lf  ", cdata[i].t_min);
-        if(input[2])printf("%04.1lf  ", cdata[i].t_max);
-        if(input[3])printf("%04.1lf  ", cdata[i].niederschlag);
-        printf("\n");
+        if(input[1]){
+            printf("%04.1lf  ", cdata[i].t_min);
+            //Ausgabe ins outputfile
+            fprintf(output_f,"%04.1lf  ", cdata[i].t_min);
+        }
+        if(input[2]){
+            printf("%04.1lf  ", cdata[i].t_max);
+            //Ausgabe ins outputfile
+            fprintf(output_f,"%04.1lf  ", cdata[i].t_max);
+        }
+        if(input[3]){
+            printf("%04.1lf  ", cdata[i].niederschlag);
+            //Ausgabe ins outputfile
+            fprintf(output_f,"%04.1lf  ", cdata[i].niederschlag);
+        }
+        printf("\n");fprintf(output_f,"\n");
     }
 
     free(token);
+    fclose(output_f);
+    output_f = NULL;
     return 0;
 }
+
 
 int request_datum_args(filter_args_t *args){
 
@@ -850,6 +878,76 @@ int request_t_max_args(filter_args_t *args){
     return -1;
 }
 
+int request_niederschlag_args(filter_args_t *args){
+
+    
+    char letter, buff[50], key[5];
+    //Variablen fuer die eingabe eines zeitraums
+    double limit1, limit2;
+
+    //Initialisiere input buffer -> Benutzer eingabe
+    for(int i = 0; i < 50; i++)buff[i] = '\0';
+
+    printf("\n\n+-------------------------------------------------------------------+\n");
+    printf("| Filterung nach Niederschlag:                                      |\n");
+    printf("|                                                                   |\n");
+    printf("| Bitte waehlen Sie eines der moeglichen Filtermethoden aus:        |\n");
+    printf("|* niederschlag XX - YY    ->Filterung eines niederschlag Bereichs  |\n");
+    printf("|* bis YY                  ->alle Daten bis ...                     |\n"); 
+    printf("|* ab XX                   ->alle Daten ab  ...                     |\n");
+    printf("|                                                                   |\n");
+    printf("| z.B. niederschlag 5 - 7.3                                         |\n");
+    printf("| z.B. bis 3.1                                                      |\n");
+    printf("| z.B. ab 2.2                                                       |\n");
+    printf("+-------------------------------------------------------------------+\n\n");
+    printf("Eingabe: ");
+
+    //Zeichenweises einlesen
+    for(int i = 0; (letter = getchar()) != '\n';i++)buff[i] = letter;
+
+    //Einlesen vom schluesselwort zur fallunterscheidung
+    sscanf(buff,"%s",key);
+
+    //Array zum auffangen vom key
+    char dump[5];
+
+    //Wenn key == datum dann 1. Filteroption ausführen
+    if(strcmp(key, "niederschlag")==0){
+        
+        //Entspricht filtermethode 2 filter_niederschlag(2,limit1,limit2)
+        sscanf(buff, "%s %lf - %lf", dump, &limit1, &limit2);
+        //Filtermethode 2 weahlen
+        args[3].method = 2;
+        args[3].arg1 = limit1;
+        args[3].arg2 = limit2;
+        return 0;
+    }
+
+
+    if(strcmp(key, "bis")==0){
+        
+        //Entspricht filtermethode 0 filter_niederschlag(0,limit1, 0)
+        sscanf(buff, "%s %lf", dump, &limit1);
+        //Filtermethode 0 weahlen
+        args[3].method = 0;
+        args[3].arg1 = limit1;
+        return 0;
+    }
+
+    if(strcmp(key, "ab")   ==0){
+        //Entspricht filtermethode 1 filter_niederschlag(1,limit1,limit2)
+        sscanf(buff, "%s %lf", dump, &limit1);
+        //Filtermethode 1 weahlen
+        args[3].method = 1;
+        args[3].arg1 = limit1;
+        return 0;
+    }
+
+    //Falls keine Eingabe mit eines der Schlüsselwoerter uebereinstimmt returniere ERROR
+    printf("\033[1;31m");printf("\n\nERROR: Bitte geben sie eines der vorgegebenen Eingabeoptionen ein!\n\n");printf("\033[0m");
+    return -1;
+}
+
 int get_input(filter_args_t *args, int *filter_option){
 
     char *token, letter, buff[50];
@@ -907,6 +1005,7 @@ int get_input(filter_args_t *args, int *filter_option){
 
             validity = -1;
             filter_option[3] = 1;
+            while(validity != 0)validity = request_niederschlag_args(args);
         }
 
         //Eingabe auf richtigkeit ueberpruefen
@@ -932,6 +1031,7 @@ int main(void){
     
 
     char run_condition = 'y';
+    int total_runs = 0;
 
     while(run_condition != 'n'){
 
@@ -968,10 +1068,11 @@ int main(void){
         if(filter_option[0])filter_datum(cdata, &number_datasets, args[0].method, args[0].arg1, args[0].arg2);
         if(filter_option[1])filter_tmin(cdata, &number_datasets, args[1].method, args[1].arg1, args[1].arg2);
         if(filter_option[2])filter_tmax(cdata, &number_datasets, args[2].method, args[2].arg1, args[2].arg2);
-        //if(filter_option[3])filter_niederschlag(cdata, &number_datasets, 1, 5, 30);
+        if(filter_option[3])filter_niederschlag(cdata, &number_datasets, args[3].method, args[3].arg1, args[3].arg2);
         
         //Wiederhole die Anfrage solange bis return wert 0 bei gueltiger eingabe
-        while(show_data(cdata, number_datasets)!=0);
+        total_runs++;
+        while(show_data(cdata, number_datasets,total_runs)!=0);
 
         printf("\033[1;31m");printf("\n\nMoechten Sie die Anwendung wiederholen? (y/n)\n\n");
         printf("\033[0m");
