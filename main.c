@@ -780,6 +780,75 @@ int request_t_min_args(filter_args_t *args){
     return -1;
 }
 
+int request_t_max_args(filter_args_t *args){
+
+    
+    char letter, buff[50], key[5];
+    //Variablen fuer die eingabe eines zeitraums
+    double limit1, limit2;
+
+    //Initialisiere input buffer -> Benutzer eingabe
+    for(int i = 0; i < 50; i++)buff[i] = '\0';
+
+    printf("\n\n+-------------------------------------------------------------------+\n");
+    printf("| Filterung nach tmax:                                              |\n");
+    printf("|                                                                   |\n");
+    printf("| Bitte waehlen Sie eines der moeglichen Filtermethoden aus:        |\n");
+    printf("|* t_max XX - YY           ->Filterung eines tmax Bereichs          |\n");
+    printf("|* bis YY                    ->alle Daten bis ...                   |\n"); 
+    printf("|* ab XX                     ->alle Daten ab  ...                   |\n");
+    printf("|                                                                   |\n");
+    printf("| z.B. t_max -1.2 - 5.5                                             |\n");
+    printf("| z.B. bis 3.1                                                      |\n");
+    printf("| z.B. ab 2.2                                                       |\n");
+    printf("+-------------------------------------------------------------------+\n\n");
+    printf("Eingabe: ");
+
+    //Zeichenweises einlesen
+    for(int i = 0; (letter = getchar()) != '\n';i++)buff[i] = letter;
+
+    //Einlesen vom schluesselwort zur fallunterscheidung
+    sscanf(buff,"%s",key);
+
+    //Array zum auffangen vom key
+    char dump[5];
+
+    //Wenn key == datum dann 1. Filteroption ausführen
+    if(strcmp(key, "t_max")==0){
+        
+        //Entspricht filtermethode 2 filter_t_max(2,limit1,limit2)
+        sscanf(buff, "%s %lf - %lf", dump, &limit1, &limit2);
+        //Filtermethode 2 weahlen
+        args[2].method = 2;
+        args[2].arg1 = limit1;
+        args[2].arg2 = limit2;
+        return 0;
+    }
+
+
+    if(strcmp(key, "bis")==0){
+        
+        //Entspricht filtermethode 0 filter_tmax(0,limit1, 0)
+        sscanf(buff, "%s %lf", dump, &limit1);
+        //Filtermethode 0 weahlen
+        args[2].method = 0;
+        args[2].arg1 = limit1;
+        return 0;
+    }
+
+    if(strcmp(key, "ab")   ==0){
+        //Entspricht filtermethode 1 filter_tmax(1,limit1,limit2)
+        sscanf(buff, "%s %lf", dump, &limit1);
+        //Filtermethode 1 weahlen
+        args[2].method = 1;
+        args[2].arg1 = limit1;
+        return 0;
+    }
+
+    //Falls keine Eingabe mit eines der Schlüsselwoerter uebereinstimmt returniere ERROR
+    printf("\033[1;31m");printf("\n\nERROR: Bitte geben sie eines der vorgegebenen Eingabeoptionen ein!\n\n");printf("\033[0m");
+    return -1;
+}
 
 int get_input(filter_args_t *args, int *filter_option){
 
@@ -829,6 +898,9 @@ int get_input(filter_args_t *args, int *filter_option){
 
             validity = -1;
             filter_option[2] = 1;
+            //Solange eingabe ungueltig wiederholen
+            while(validity != 0)validity = request_t_max_args(args);
+
         }
 
         if(strcmp(token,"niederschlag")==0){
@@ -895,7 +967,7 @@ int main(void){
 
         if(filter_option[0])filter_datum(cdata, &number_datasets, args[0].method, args[0].arg1, args[0].arg2);
         if(filter_option[1])filter_tmin(cdata, &number_datasets, args[1].method, args[1].arg1, args[1].arg2);
-        //if(filter_option[2])filter_tmax(cdata, &number_datasets, 1, 8, 30);
+        if(filter_option[2])filter_tmax(cdata, &number_datasets, args[2].method, args[2].arg1, args[2].arg2);
         //if(filter_option[3])filter_niederschlag(cdata, &number_datasets, 1, 5, 30);
         
         //Wiederhole die Anfrage solange bis return wert 0 bei gueltiger eingabe
