@@ -550,7 +550,7 @@ int show_data(cdatas_t *cdata, int number_datasets){
     for(int i = 0; i < 50; i++)buff[i] = '\0';
 
 
-    printf("+------------------------+\n");
+    printf("\n\n+------------------------+\n");
     printf("| Ausgabeoptionen:       |\n");
     printf("|* datum                 |\n");
     printf("|* t_min                 |\n");
@@ -616,7 +616,7 @@ int request_datum_args(filter_args_t *args){
     //Initialisiere input buffer -> Benutzer eingabe
     for(int i = 0; i < 50; i++)buff[i] = '\0';
 
-    printf("+-------------------------------------------------------------------+\n");
+    printf("\n\n+-------------------------------------------------------------------+\n");
     printf("| Filterung nach Datum: (Datensaetze vom 01.01.1948 - 31.12.2009)   |\n");
     printf("|                                                                   |\n");
     printf("| Bitte waehlen Sie eines der moeglichen Filtermethoden aus:        |\n");
@@ -710,6 +710,77 @@ int request_datum_args(filter_args_t *args){
     return -1;
 }
 
+int request_t_min_args(filter_args_t *args){
+
+    
+    char letter, buff[50], key[5];
+    //Variablen fuer die eingabe eines zeitraums
+    double limit1, limit2;
+
+    //Initialisiere input buffer -> Benutzer eingabe
+    for(int i = 0; i < 50; i++)buff[i] = '\0';
+
+    printf("\n\n+-------------------------------------------------------------------+\n");
+    printf("| Filterung nach tmin:                                              |\n");
+    printf("|                                                                   |\n");
+    printf("| Bitte waehlen Sie eines der moeglichen Filtermethoden aus:        |\n");
+    printf("|* t_min XX - YY           ->Filterung eines tmin Bereichs          |\n");
+    printf("|* bis YY                    ->alle Daten bis ...                   |\n"); 
+    printf("|* ab XX                     ->alle Daten ab  ...                   |\n");
+    printf("|                                                                   |\n");
+    printf("| z.B. t_min -1.2 - 5.5                                             |\n");
+    printf("| z.B. bis 3.1                                                      |\n");
+    printf("| z.B. ab 2.2                                                       |\n");
+    printf("+-------------------------------------------------------------------+\n\n");
+    printf("Eingabe: ");
+
+    //Zeichenweises einlesen
+    for(int i = 0; (letter = getchar()) != '\n';i++)buff[i] = letter;
+
+    //Einlesen vom schluesselwort zur fallunterscheidung
+    sscanf(buff,"%s",key);
+
+    //Array zum auffangen vom key
+    char dump[5];
+
+    //Wenn key == datum dann 1. Filteroption ausführen
+    if(strcmp(key, "t_min")==0){
+        
+        //Entspricht filtermethode 2 filter_t_min(2,limit1,limit2)
+        sscanf(buff, "%s %lf - %lf", dump, &limit1, &limit2);
+        //Filtermethode 2 weahlen
+        args[1].method = 2;
+        args[1].arg1 = limit1;
+        args[1].arg2 = limit2;
+        return 0;
+    }
+
+
+    if(strcmp(key, "bis")==0){
+        
+        //Entspricht filtermethode 0 filter_tmin(0,limit1, 0)
+        sscanf(buff, "%s %lf", dump, &limit1);
+        //Filtermethode 0 weahlen
+        args[1].method = 0;
+        args[1].arg1 = limit1;
+        return 0;
+    }
+
+    if(strcmp(key, "ab")   ==0){
+        //Entspricht filtermethode 1 filter_tmin(1,limit1,limit2)
+        sscanf(buff, "%s %lf", dump, &limit1);
+        //Filtermethode 1 weahlen
+        args[1].method = 1;
+        args[1].arg1 = limit1;
+        return 0;
+    }
+
+    //Falls keine Eingabe mit eines der Schlüsselwoerter uebereinstimmt returniere ERROR
+    printf("\033[1;31m");printf("\n\nERROR: Bitte geben sie eines der vorgegebenen Eingabeoptionen ein!\n\n");printf("\033[0m");
+    return -1;
+}
+
+
 int get_input(filter_args_t *args, int *filter_option){
 
     char *token, letter, buff[50];
@@ -734,24 +805,35 @@ int get_input(filter_args_t *args, int *filter_option){
     token = strtok(buff," ,\n\t");
     
     //Eingabe der Filtergrenzwerte ueberpruefen
-    int validity = -1;
+    int validity;
 
-    while(validity != 0){
+    do{
 
         if(strcmp(token,"datum")==0){
+
+            validity = -1;
             //Auffüllen der Parameter Daten mit Datum Filter Werten
             filter_option[0] = 1;
-            validity = request_datum_args(args);
+            //Solange eingabe ungueltig wiederholen
+            while(validity != 0)validity = request_datum_args(args);
         }
         if(strcmp(token,"t_min")==0){
+
+            validity = -1;
             filter_option[1] = 1;
+            //Solange eingabe ungueltig wiederholen
+            while(validity != 0)validity = request_t_min_args(args);
         }
         
         if(strcmp(token,"t_max")==0){
+
+            validity = -1;
             filter_option[2] = 1;
         }
 
         if(strcmp(token,"niederschlag")==0){
+
+            validity = -1;
             filter_option[3] = 1;
         }
 
@@ -766,8 +848,8 @@ int get_input(filter_args_t *args, int *filter_option){
             printf("\033[1;31m");printf("\n\nERROR: Bitte geben sie eines der vorgegebenen Eingabeoptionen ein!\n\n");printf("\033[0m");
             return -1;
         }
-    }
-    while((token = strtok(NULL, " ,\n\t"))!=NULL);
+    }while(((token = strtok(NULL, " ,\n\t"))!=NULL));
+
     free(token);
 
     return 0;
@@ -776,53 +858,61 @@ int get_input(filter_args_t *args, int *filter_option){
 
 int main(void){
     
-    FILE *input;
-    cdatas_t *cdata;
-    filter_args_t *args;
 
-    int number_datasets = 0, padding = 15;
+    char run_condition = 'y';
 
-    //Filteroptionen dient der "aktivierung" der filter von Datum | T_MIN | T_MAX | Niederschlag
-    int filter_option[4] = {0,0,0,0};
+    while(run_condition != 'n'){
 
-run:
-    //Inputstream von der CSV datei erzeugen
-    input = fopen("input.csv","r");
+        //Maximale Azahl an datensaetze welches spaeter in get_input berechnet wird
+        int number_datasets = 0, padding = 15;
 
-    //Anzahl Datensaetze ermitteln
-    number_datasets = process_input(input, number_datasets,padding);
-    
-    //Allocate Pointer of size number_datasets
-    cdata = (cdatas_t *)malloc(number_datasets * sizeof(cdatas_t));
+        //Filteroptionen dient der "aktivierung" der filter von Datum | T_MIN | T_MAX | Niederschlag
+        int filter_option[4] = {0,0,0,0};
 
-    //Initialize input param variables
-    args = (filter_args_t *)malloc(4 * sizeof(filter_args_t));
-            
-    //Uebertragen der Datensaetze vom input stream in das struct array
-    input = fopen("input.csv","r");
-    parse_input_to_struct(input, cdata, number_datasets,padding);
+        //Inputstream von der CSV datei erzeugen
+        FILE *input = fopen("input.csv","r");
 
-    //Wenn User eingabe Korrekt dann get_input() == 0
-    //Bei ungueltiger Eingabe Return wert -1 -> wiederhole Eingabe aufforderung
-    while(get_input(args, filter_option) != 0);
+        //Anzahl Datensaetze ermitteln
+        number_datasets = process_input(input, number_datasets,padding);
 
-    if(filter_option[0])filter_datum(cdata, &number_datasets, args[0].method, args[0].arg1, args[0].arg2);
-    //if(filter_option[1])filter_tmax(cdata, &number_datasets, 1, 8, 30);
-    //if(filter_option[2])filter_tmin(cdata, &number_datasets, 1, 3, 30);
-    //if(filter_option[3])filter_niederschlag(cdata, &number_datasets, 1, 5, 30);
-    
-    //Wiederhole die Anfrage solange bis return wert 0 bei gueltiger eingabe
-    while(show_data(cdata, number_datasets)!=0);
+        //freeing input stream
+        fclose(input);
+        input = NULL;
+        
+        //Allocate Pointer of size number_datasets
+        cdatas_t *cdata = (cdatas_t *)malloc(number_datasets * sizeof(cdatas_t));
 
-    printf("\033[1;31m");printf("\n\nMoechten Sie die Anwendung wiederholen? (y/n)\n\n");
-    printf("\033[0m");
+        //Initialize input param variables
+        filter_args_t *args = (filter_args_t *)malloc(4 * sizeof(filter_args_t));
+                
+        //Uebertragen der Datensaetze vom input stream in das struct array
+        input = fopen("input.csv","r");
+        parse_input_to_struct(input, cdata, number_datasets,padding);
 
-    free(cdata);
-    free(args);
-    fclose(input);
-    
+        //Wenn User eingabe Korrekt dann get_input() == 0
+        //Bei ungueltiger Eingabe Return wert -1 -> wiederhole Eingabe aufforderung
+        while(get_input(args, filter_option) != 0);
 
-goto run;
+        if(filter_option[0])filter_datum(cdata, &number_datasets, args[0].method, args[0].arg1, args[0].arg2);
+        if(filter_option[1])filter_tmin(cdata, &number_datasets, args[1].method, args[1].arg1, args[1].arg2);
+        //if(filter_option[2])filter_tmax(cdata, &number_datasets, 1, 8, 30);
+        //if(filter_option[3])filter_niederschlag(cdata, &number_datasets, 1, 5, 30);
+        
+        //Wiederhole die Anfrage solange bis return wert 0 bei gueltiger eingabe
+        while(show_data(cdata, number_datasets)!=0);
+
+        printf("\033[1;31m");printf("\n\nMoechten Sie die Anwendung wiederholen? (y/n)\n\n");
+        printf("\033[0m");
+
+        free(cdata);
+        cdata = NULL;
+        free(args);
+        args = NULL;
+        fclose(input);
+        input = NULL;
+        run_condition = getchar();getchar();
+
+    }
 
     return 0;
 }

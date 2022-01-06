@@ -25,6 +25,9 @@ debug: $(SRCS)
 	gcc $(CFLAGS) -o $(TARGET) $^ 
 	gdb $(TARGET) core
 
-
+memcheck: $(SRCS)
+	ulimit -c unlimited
+	gcc $(CFLAGS) -o $(TARGET) $^ 
+	valgrind --leak-check=full --show-leak-kinds=all ./$(TARGET)
 clean:
 	rm -rf $(BINS)
