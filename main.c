@@ -10,6 +10,13 @@ typedef struct {
     double niederschlag;
 }cdatas_t;
 
+typedef struct {
+
+    int method;
+    double arg1;
+    double arg2;
+}filter_args_t;
+
 int process_input(FILE *input, int number_datasets, int padding){
     
     //determine number of datasets
@@ -104,37 +111,88 @@ void parse_input_to_struct(FILE *input, cdatas_t *cdata, int padding){
 }
 
 
-void filter_tmin(cdatas_t *cdata, int number_datasets, int filter_methode, double t_min_limit1, double t_min_limit2)
+void filter_tmin(cdatas_t *cdata, int *number_datasets, int filter_methode, double t_min_limit1, double t_min_limit2)
 {
+    
+    int new_index = 0;
+    int temp_num_datasets = *number_datasets;
 
     switch(filter_methode){
         case 0:
-            for(int i = 0; i <= number_datasets; i++)
+            for(int i = 0 ; i <= *number_datasets; i++)
             {
                 if(cdata[i].t_min < t_min_limit1)
                 {
-                    printf("%15d %5lf %5lf %5lf\n",cdata[i].datum, cdata[i].t_min,cdata[i].t_max, cdata[i].niederschlag);
+                    //printf("%15d %5lf %5lf %5lf\n",cdata[i].datum, cdata[i].t_min,cdata[i].t_max, cdata[i].niederschlag);
+                    cdata[new_index].datum = cdata[i].datum;
+                    cdata[new_index].t_min = cdata[i].t_min;
+                    cdata[new_index].t_max = cdata[i].t_max;
+                    cdata[new_index].niederschlag = cdata[i].niederschlag;
+                    new_index++;
                 }
             }
+            
+            *number_datasets = new_index - 1;
+
+            while(new_index < temp_num_datasets)
+            {
+                cdata[new_index].datum = 0;
+                cdata[new_index].t_min = 0;
+                cdata[new_index].t_max = 0;
+                cdata[new_index].niederschlag = 0;
+                new_index++;
+            }
+
+
             break;
 
         case 1:
-            for(int i = 0; i <= number_datasets; i++)
+            for(int i = 0; i <= *number_datasets; i++)
             {
                 if(cdata[i].t_min > t_min_limit1)
                 {
-                    printf("%15d %5lf %5lf %5lf\n",cdata[i].datum, cdata[i].t_min,cdata[i].t_max, cdata[i].niederschlag);
+                    cdata[new_index].datum = cdata[i].datum;
+                    cdata[new_index].t_min = cdata[i].t_min;
+                    cdata[new_index].t_max = cdata[i].t_max;
+                    cdata[new_index].niederschlag = cdata[i].niederschlag;
+                    new_index++;
                 }
+            }
+
+            *number_datasets = new_index - 1;
+
+            while(new_index < temp_num_datasets)
+            {
+                cdata[new_index].datum = 0;
+                cdata[new_index].t_min = 0;
+                cdata[new_index].t_max = 0;
+                cdata[new_index].niederschlag = 0;
+                new_index++;
             }
             break;
 
         case 2:
-            for(int i = 0; i <= number_datasets; i++)
+            for(int i = 0; i <= *number_datasets; i++)
             {
                 if((cdata[i].t_min > t_min_limit1)&&(cdata[i].t_min < t_min_limit2))
                 {
-                    printf("%15d %5lf %5lf %5lf\n",cdata[i].datum, cdata[i].t_min,cdata[i].t_max, cdata[i].niederschlag);
+                    cdata[new_index].datum = cdata[i].datum;
+                    cdata[new_index].t_min = cdata[i].t_min;
+                    cdata[new_index].t_max = cdata[i].t_max;
+                    cdata[new_index].niederschlag = cdata[i].niederschlag;
+                    new_index++;
                 }
+            }
+            *number_datasets = new_index - 1;
+
+            while(new_index < temp_num_datasets)
+            {
+                cdata[new_index].datum = 0;
+                cdata[new_index].t_min = 0;
+                cdata[new_index].t_max = 0;
+                cdata[new_index].niederschlag = 0;
+                new_index++;
+
             }
             break;
 
@@ -145,37 +203,93 @@ void filter_tmin(cdatas_t *cdata, int number_datasets, int filter_methode, doubl
 }
 
 
-void filter_tmax(cdatas_t *cdata, int number_datasets, int filter_methode, double t_max_limit1, double t_max_limit2)
+void filter_tmax(cdatas_t *cdata, int *number_datasets, int filter_methode, double t_max_limit1, double t_max_limit2)
 {
+
+    //Wenn Filter Daten übereinstimmen -> Überschreiben der datensätze durchverschieben des Arrays
+    //Index des neuen Datensatzes
+    int new_index = 0;
+    int temp_num_datasets = *number_datasets;
 
     switch(filter_methode){
         case 0:
-            for(int i = 0; i <= number_datasets; i++)
+            for(int i = 0; i <= *number_datasets; i++)
             {
+                //Wenn Daten mit Filter übereinstimmen überschreiben der alten datensätze durch verschieben
                 if(cdata[i].t_max < t_max_limit1)
                 {
-                    printf("%15d %5lf %5lf %5lf\n",cdata[i].datum, cdata[i].t_min,cdata[i].t_max, cdata[i].niederschlag);
+                    //printf("%15d %5lf %5lf %5lf\n",cdata[i].datum, cdata[i].t_min,cdata[i].t_max, cdata[i].niederschlag);
+                
+                    cdata[new_index].datum = cdata[i].datum;
+                    cdata[new_index].t_min = cdata[i].t_min;
+                    cdata[new_index].t_max = cdata[i].t_max;
+                    cdata[new_index].niederschlag = cdata[i].niederschlag;
+                    new_index++;
                 }
+            }
+            //Restliche "Leere Datensätze" mit 0 auffüllen
+            *number_datasets = new_index - 1;
+
+            while(new_index < temp_num_datasets)
+            {
+                cdata[new_index].datum = 0;
+                cdata[new_index].t_min = 0;
+                cdata[new_index].t_max = 0;
+                cdata[new_index].niederschlag = 0;
+                new_index++;
+
             }
             break;
 
         case 1:
-            for(int i = 0; i <= number_datasets; i++)
+            for(int i = 0; i <= *number_datasets; i++)
             {
                 if(cdata[i].t_max > t_max_limit1)
                 {
-                    printf("%15d %5lf %5lf %5lf\n",cdata[i].datum, cdata[i].t_min,cdata[i].t_max, cdata[i].niederschlag);
+                    cdata[new_index].datum = cdata[i].datum;
+                    cdata[new_index].t_min = cdata[i].t_min;
+                    cdata[new_index].t_max = cdata[i].t_max;
+                    cdata[new_index].niederschlag = cdata[i].niederschlag;
+                    new_index++;
                 }
+            }
+            //Restliche "Leere Datensätze" mit 0 auffüllen
+            *number_datasets = new_index - 1;
+
+            while(new_index < temp_num_datasets)
+            {
+                cdata[new_index].datum = 0;
+                cdata[new_index].t_min = 0;
+                cdata[new_index].t_max = 0;
+                cdata[new_index].niederschlag = 0;
+                new_index++;
+
             }
             break;
 
         case 2:
-            for(int i = 0; i <= number_datasets; i++)
+            for(int i = 0; i <= *number_datasets; i++)
             {
                 if((cdata[i].t_max > t_max_limit1)&&(cdata[i].t_max < t_max_limit2))
                 {
-                    printf("%15d %5lf %5lf %5lf\n",cdata[i].datum, cdata[i].t_min,cdata[i].t_max, cdata[i].niederschlag);
+                    cdata[new_index].datum = cdata[i].datum;
+                    cdata[new_index].t_min = cdata[i].t_min;
+                    cdata[new_index].t_max = cdata[i].t_max;
+                    cdata[new_index].niederschlag = cdata[i].niederschlag;
+                    new_index++;
                 }
+            }
+            //Restliche "Leere Datensätze" mit 0 auffüllen
+            *number_datasets = new_index - 1;
+
+            while(new_index < temp_num_datasets)
+            {
+                cdata[new_index].datum = 0;
+                cdata[new_index].t_min = 0;
+                cdata[new_index].t_max = 0;
+                cdata[new_index].niederschlag = 0;
+                new_index++;
+
             }
             break;
 
@@ -185,37 +299,90 @@ void filter_tmax(cdatas_t *cdata, int number_datasets, int filter_methode, doubl
     }
 }
 
-void filter_niederschlag(cdatas_t *cdata, int number_datasets, int filter_methode, double niederschlag_limit1, double niederschlag_limit2)
+void filter_niederschlag(cdatas_t *cdata, int *number_datasets, int filter_methode, double niederschlag_limit1, double niederschlag_limit2)
 {
+    //Wenn Filter Daten übereinstimmen -> Überschreiben der datensätze durchverschieben des Arrays
+    //Index des neuen Datensatzes
+    int new_index = 0;
+    int temp_num_datasets = *number_datasets;
+
 
     switch(filter_methode){
         case 0:
-            for(int i = 0; i <= number_datasets; i++)
+            for(int i = 0; i <= *number_datasets; i++)
             {
                 if(cdata[i].niederschlag < niederschlag_limit1)
                 {
-                    printf("%15d %5lf %5lf %5lf\n",cdata[i].datum, cdata[i].t_min,cdata[i].t_max, cdata[i].niederschlag);
+                    cdata[new_index].datum = cdata[i].datum;
+                    cdata[new_index].t_min = cdata[i].t_min;
+                    cdata[new_index].t_max = cdata[i].t_max;
+                    cdata[new_index].niederschlag = cdata[i].niederschlag;
+                    new_index++;
                 }
+            }
+            //Restliche "Leere Datensätze" mit 0 auffüllen
+            *number_datasets = new_index - 1;
+
+            while(new_index < temp_num_datasets)
+            {
+                cdata[new_index].datum = 0;
+                cdata[new_index].t_min = 0;
+                cdata[new_index].t_max = 0;
+                cdata[new_index].niederschlag = 0;
+                new_index++;
+
             }
             break;
 
         case 1:
-            for(int i = 0; i <= number_datasets; i++)
+            for(int i = 0; i <= *number_datasets; i++)
             {
                 if(cdata[i].niederschlag > niederschlag_limit1)
                 {
-                    printf("%15d %5lf %5lf %5lf\n",cdata[i].datum, cdata[i].t_min,cdata[i].t_max, cdata[i].niederschlag);
+                    cdata[new_index].datum = cdata[i].datum;
+                    cdata[new_index].t_min = cdata[i].t_min;
+                    cdata[new_index].t_max = cdata[i].t_max;
+                    cdata[new_index].niederschlag = cdata[i].niederschlag;
+                    new_index++;
                 }
+            }
+            //Restliche "Leere Datensätze" mit 0 auffüllen
+            *number_datasets = new_index - 1;
+
+            while(new_index < temp_num_datasets)
+            {
+                cdata[new_index].datum = 0;
+                cdata[new_index].t_min = 0;
+                cdata[new_index].t_max = 0;
+                cdata[new_index].niederschlag = 0;
+                new_index++;
+
             }
             break;
 
         case 2:
-            for(int i = 0; i <= number_datasets; i++)
+            for(int i = 0; i <= *number_datasets; i++)
             {
                 if((cdata[i].niederschlag > niederschlag_limit1)&&(cdata[i].niederschlag < niederschlag_limit2))
                 {
-                    printf("%15d %5lf %5lf %5lf\n",cdata[i].datum, cdata[i].t_min,cdata[i].t_max, cdata[i].niederschlag);
+                    cdata[new_index].datum = cdata[i].datum;
+                    cdata[new_index].t_min = cdata[i].t_min;
+                    cdata[new_index].t_max = cdata[i].t_max;
+                    cdata[new_index].niederschlag = cdata[i].niederschlag;
+                    new_index++;
                 }
+            }
+            //Restliche "Leere Datensätze" mit 0 auffüllen
+            *number_datasets = new_index - 1;
+
+            while(new_index < temp_num_datasets)
+            {
+                cdata[new_index].datum = 0;
+                cdata[new_index].t_min = 0;
+                cdata[new_index].t_max = 0;
+                cdata[new_index].niederschlag = 0;
+                new_index++;
+
             }
             break;
 
@@ -225,44 +392,140 @@ void filter_niederschlag(cdatas_t *cdata, int number_datasets, int filter_method
     }
 }
 
-void filter_datum(cdatas_t *cdata, int number_datasets, int filter_methode, int datum_limit1, int datum_limit2)
+void filter_datum(cdatas_t *cdata, int *number_datasets, int filter_methode, int datum_limit1, int datum_limit2)
 {
+    //Wenn Filter Daten übereinstimmen -> Überschreiben der datensätze durchverschieben des Arrays
+    //Index des neuen Datensatzes
+    int state;
+    int new_index = 0;
+    int temp_num_datasets = *number_datasets;
+
     switch(filter_methode){
         case 0:
-            for(int i = 0; i <= number_datasets; i++)
+            for(int i = 0; i <= *number_datasets; i++)
             {
                 if(cdata[i].datum < datum_limit1)
                 {
-                    printf("%15d %5lf %5lf %5lf\n",cdata[i].datum, cdata[i].t_min,cdata[i].t_max, cdata[i].niederschlag);
+                    cdata[new_index].datum = cdata[i].datum;
+                    cdata[new_index].t_min = cdata[i].t_min;
+                    cdata[new_index].t_max = cdata[i].t_max;
+                    cdata[new_index].niederschlag = cdata[i].niederschlag;
+                    new_index++;
                 }
+            }
+            //Restliche "Leere Datensätze" mit 0 auffüllen
+            *number_datasets = new_index - 1;
+
+            while(new_index < temp_num_datasets)
+            {
+                cdata[new_index].datum = 0;
+                cdata[new_index].t_min = 0;
+                cdata[new_index].t_max = 0;
+                cdata[new_index].niederschlag = 0;
+                new_index++;
+
             }
             break;
 
         case 1:
-            for(int i = 0; i <= number_datasets; i++)
+            for(int i = 0; i <= *number_datasets; i++)
             {
                 if(cdata[i].datum > datum_limit1)
                 {
-                    printf("%15d %5lf %5lf %5lf\n",cdata[i].datum, cdata[i].t_min,cdata[i].t_max, cdata[i].niederschlag);
+                    cdata[new_index].datum = cdata[i].datum;
+                    cdata[new_index].t_min = cdata[i].t_min;
+                    cdata[new_index].t_max = cdata[i].t_max;
+                    cdata[new_index].niederschlag = cdata[i].niederschlag;
+                    new_index++;
                 }
+            }
+            //Restliche "Leere Datensätze" mit 0 auffüllen
+            *number_datasets = new_index - 1;
+
+            while(new_index < temp_num_datasets)
+            {
+                cdata[new_index].datum = 0;
+                cdata[new_index].t_min = 0;
+                cdata[new_index].t_max = 0;
+                cdata[new_index].niederschlag = 0;
+                new_index++;
+
             }
             break;
 
         case 2:
             //int avrg = 0;
             //int zeitraum = 0;
-            for(int i = 0; i <= number_datasets; i++)
+            for(int i = 0; i <= *number_datasets; i++)
             {
                 if((cdata[i].datum >= datum_limit1)&&(cdata[i].datum <= datum_limit2))
                 {
                     //zeitraum++;
-                    printf("%15d %5lf %5lf %5lf\n",cdata[i].datum, cdata[i].t_min,cdata[i].t_max, cdata[i].niederschlag);
+                    cdata[new_index].datum = cdata[i].datum;
+                    cdata[new_index].t_min = cdata[i].t_min;
+                    cdata[new_index].t_max = cdata[i].t_max;
+                    cdata[new_index].niederschlag = cdata[i].niederschlag;
+                    new_index++;
                     //avrg = avrg + cdata[i].niederschlag;
                 }
             }
             
             //avrg = avrg / zeitraum;
             //printf(Der Mittel von Zeitraum: XX -YYY : %d,avrg);
+            //
+            //Restliche "Leere Datensätze" mit 0 auffüllen
+            *number_datasets = new_index - 1;
+
+            while(new_index < temp_num_datasets)
+            {
+                cdata[new_index].datum = 0;
+                cdata[new_index].t_min = 0;
+                cdata[new_index].t_max = 0;
+                cdata[new_index].niederschlag = 0;
+                new_index++;
+
+            }
+            break;
+
+        case 3:
+            
+            //Die letzten N Tage
+            //void filter_datum(cdatas_t *cdata, int *number_datasets, int filter_methode, int datum_limit1, int datum_limit2);
+            //datum_limit1 wird zu letzte N Tage
+            //datum_limit2 wird zu letzte N Tage bis ZZ Datum | Wenn datum_limit2 == 0 wird ignoriert
+            //Wenn datum_limit2 einen Wert besitzt dann state = 0 -> equivalent mit if(cdata < datum)
+            //Wenn datum_limit2 gleich 0 ist dann state = 1 -> equivalent mit if(1) datum wird nicht beachtet
+            state = (datum_limit2 != 0) ? 0 : 1;
+
+            for(int i = *number_datasets - datum_limit1 + 1; i <= *number_datasets; i++)
+            {
+                if((cdata[i].datum <= datum_limit2)||state)
+                {
+                    //zeitraum++;
+                    cdata[new_index].datum = cdata[i].datum;
+                    cdata[new_index].t_min = cdata[i].t_min;
+                    cdata[new_index].t_max = cdata[i].t_max;
+                    cdata[new_index].niederschlag = cdata[i].niederschlag;
+                    new_index++;
+                    //avrg = avrg + cdata[i].niederschlag;
+                }
+            }
+            
+            //avrg = avrg / zeitraum;
+            //printf(Der Mittel von Zeitraum: XX -YYY : %d,avrg);
+            //
+            //Restliche "Leere Datensätze" mit 0 auffüllen
+            *number_datasets = new_index - 1;
+
+            while(new_index < temp_num_datasets)
+            {
+                cdata[new_index].datum = 0;
+                cdata[new_index].t_min = 0;
+                cdata[new_index].t_max = 0;
+                cdata[new_index].niederschlag = 0;
+                new_index++;
+
+            }
             break;
 
         default:
@@ -273,11 +536,61 @@ void filter_datum(cdatas_t *cdata, int number_datasets, int filter_methode, int 
 
 void show_data(cdatas_t *cdata, int number_datasets){
 
+    char *token, letter, buff[50];
+    int input[] = {0,0,0,0};
+
+    //Initialisiere input buffer -> Benutzer eingabe
+    for(int i = 0; i < 50; i++)buff[i] = '\0';
+
+
+    printf("+------------------------+\n");
+    printf("| Ausgabeoptionen:       |\n");
+    printf("|* Datum                 |\n");
+    printf("|* t_min                 |\n");
+    printf("|* t_max                 |\n");
+    printf("|* Niederschlag          |\n");
+    printf("|* gesamt                |\n");
+    printf("|                        |\n");
+    printf("| z.B Datum, t_max       |\n");
+    printf("+------------------------+\n\n");
+    printf("Eingabe: ");
+
+    for(int i = 0; (letter = getchar()) != '\n';i++)buff[i] = letter;
+    
+    token = strtok(buff," ,\n\t");
+    
+    while(token != NULL){
+
+        if(strcmp(token,"gesamt")==0)for(int i = 0; i < 4; i++)input[i] = 1;
+        if(strcmp(token,"Datum")==0)input[0] = 1;
+        if(strcmp(token,"t_min")==0)input[1] = 1;
+        if(strcmp(token,"t_max")==0)input[2] = 1;
+        if(strcmp(token,"Niederschlag")==0)input[3] = 1;
+
+        token = strtok(NULL," ,\n\t");
+    }
+
     for(int i = 0; i <= number_datasets; i++)
     {
-        printf("%15d %5lf %5lf %5lf\n",cdata[i].datum, cdata[i].t_min,cdata[i].t_max, cdata[i].niederschlag);
+        if(input[0]){
+            int yy = (int)cdata[i].datum/10000;
+            int mm = ((int)cdata[i].datum - (yy * 10000)) / 100;
+            int dd = ((int)cdata[i].datum - (yy * 10000) - (mm * 100));
+            printf("%02d-%02d-%4d  ", dd, mm, yy);
+        }
+        if(input[1])printf("%04.1lf  ", cdata[i].t_min);
+        if(input[2])printf("%04.1lf  ", cdata[i].t_max);
+        if(input[3])printf("%04.1lf  ", cdata[i].niederschlag);
+        printf("\n");
     }
 }
+
+void get_input(filter_args_t *args, int *filter_options){
+
+
+}
+
+
 int main(void){
     
     FILE *input;
@@ -290,17 +603,21 @@ int main(void){
     
     //Allocate Pointer of size number_datasets
     cdatas_t *cdata = (cdatas_t *)malloc(number_datasets * sizeof(cdatas_t));
+
+    //Initialize input param variables
+    filter_args_t *args = (filter_args_t *)malloc(4 * sizeof(filter_args_t));
+    int filter_options[4] = {0,0,0,0};
     
     //Parse dataset arguments to array of structs
     input = fopen("input.csv","r");
     parse_input_to_struct(input, cdata, padding);
 
-    filter_datum(cdata, number_datasets, 2, 19480201, 19480230);
-    //filter_tmax(cdata, number_datasets, 2, 10, 30);
-    //filter_tmin(cdata, number_datasets, 2, 10, 30);
-    //filter_niederschlag(cdata, number_datasets, 2, 10, 30);
+    filter_datum(cdata, &number_datasets, 3, 10, 20091226);
+    //filter_tmax(cdata, &number_datasets, 1, 8, 30);
+    //filter_tmin(cdata, &number_datasets, 1, 3, 30);
+    //filter_niederschlag(cdata, &number_datasets, 1, 5, 30);
     
-    //show_data(cdata, number_datasets);
+    show_data(cdata, number_datasets);
     free(cdata);
     return 0;
 }
