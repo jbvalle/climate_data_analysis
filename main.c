@@ -644,16 +644,49 @@ void request_datum_args(filter_args_t *args){
     }
 
 
-    if(strcmp(token, "bis")  ==0){
-        printf("2");
+    if(strcmp(key, "bis")==0){
+        
+        //Entspricht filtermethode 0 filter_datum(0,limit1, 0)
+        sscanf(buff, "%s %d.%d.%d", dump,&dd1, &mm1, &yy1);
+        //Filtermethode 0 weahlen
+        args[0].method = 0;
+        //mm,dd,yy in das format YYYYMMDD umwandeln
+        args[0].arg1 = (yy1 * 10000 + mm1 * 100 + dd1);
     }
 
-    if(strcmp(token, "ab")   ==0)printf("3");
+    if(strcmp(key, "ab")   ==0){
+        //Entspricht filtermethode 1 filter_datum(1,limit1,limit2)
+        sscanf(buff, "%s %d.%d.%d", dump,&dd1, &mm1, &yy1);
+        //Filtermethode 1 weahlen
+        args[0].method = 1;
+        //mm,dd,yy in das format YYYYMMDD umwandeln
+        args[0].arg1 = (yy1 * 10000 + mm1 * 100 + dd1);
+    }
 
-    if(strcmp(token, "1")    ==0)printf("4");
+    if(strcmp(key, "1.")==0){
 
-    if(strcmp(token, "2")    ==0)printf("5");
+        int last_x_days = 0;
+        //Entspricht filtermethode 3 filter_datum(3,limit1,0)
+        sscanf(buff, "%s letzten %d Tage", dump, &last_x_days);
+        //Filtermethode 3 weahlen
+        args[0].method = 3;
+        args[0].arg1 = last_x_days;
+        //zweites argument wichtig! Ansonsten erwartet das Programm ein limit2
+        args[0].arg2 = 0;
+    }
 
+    if(strcmp(key, "2.")==0){
+
+        int last_x_days = 0;
+        //Entspricht filtermethode 3 filter_datum(3,limit1,limit2)
+        sscanf(buff, "%s letzten %d Tage bis %d.%d.%d", dump, &last_x_days, &dd1, &mm1, &yy1);
+
+        //Filtermethode 3 weahlen
+        args[0].method = 3;
+        args[0].arg1 = last_x_days;
+        //zweites argument wichtig! Ansonsten erwartet das Programm ein limit2
+        args[0].arg2 = (yy1 * 10000 + mm1 * 100 + dd1);
+    }
 }
 
 void get_input(filter_args_t *args, int *filter_option){
