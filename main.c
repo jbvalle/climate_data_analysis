@@ -1,7 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
+#define COLOR1 "\033[1;34m"
+#define RESET "\033[0m"
 typedef struct {
 
     int datum;
@@ -555,6 +556,9 @@ int show_data(cdatas_t *cdata, int number_datasets, int total_runs, int *input){
     strcat(filename,".txt");
 
     FILE *output_f = fopen(filename,"wb+");
+    if(input == NULL){
+        printf("\033[1;31m");printf("\nERROR: Fehler beim erstellen der Ausgabedatei der gefilterten Werte!\n");printf(RESET);
+    }
 
     //Initialisiere input buffer -> Benutzer eingabe
     for(int i = 0; i < 50; i++)buff[i] = '\0';
@@ -579,10 +583,22 @@ int show_data(cdatas_t *cdata, int number_datasets, int total_runs, int *input){
     while(token != NULL){
 
         if(strcmp(token,"gesamt")==0)for(int i = 0; i < 4; i++)input[i] = 1;
-        if(strcmp(token,"datum")==0)input[0] = 1;
-        if(strcmp(token,"t_min")==0)input[1] = 1;
-        if(strcmp(token,"t_max")==0)input[2] = 1;
-        if(strcmp(token,"niederschlag")==0)input[3] = 1;
+        if(strcmp(token,"datum")==0){
+            input[0] = 1;
+            fprintf(output_f,"datum;");
+        }
+        if(strcmp(token,"t_min")==0){
+            input[1] = 1;
+            fprintf(output_f,"t_min;");
+        }
+        if(strcmp(token,"t_max")==0){
+            input[2] = 1;
+            fprintf(output_f,"t_max;");
+        }
+        if(strcmp(token,"niederschlag")==0){
+            input[3] = 1;
+            fprintf(output_f,"niederschlag;");
+        }
 
         token = strtok(NULL," ,\n\t");
     }
@@ -603,24 +619,24 @@ int show_data(cdatas_t *cdata, int number_datasets, int total_runs, int *input){
             int yy = (int)cdata[i].datum/10000;
             int mm = ((int)cdata[i].datum - (yy * 10000)) / 100;
             int dd = ((int)cdata[i].datum - (yy * 10000) - (mm * 100));
-            printf("%02d-%02d-%4d  ", dd, mm, yy);
+            printf(COLOR1);printf("Datum:");printf(RESET);printf("%02d-%02d-%4d  ",dd, mm, yy);
             //Ausgabe ins outputfile
-            fprintf(output_f,"%02d-%02d-%4d;  ", dd, mm, yy);
+            fprintf(output_f,"%02d-%02d-%4d; ",dd, mm, yy);
         }
         if(input[1]){
-            printf("%04.1lf  ", cdata[i].t_min);
+            printf(COLOR1);printf("T_MIN:");printf(RESET);printf("%04.1lf  ",cdata[i].t_min);
             //Ausgabe ins outputfile
-            fprintf(output_f,"%04.1lf;  ", cdata[i].t_min);
+            fprintf(output_f,"%04.1lf; ",cdata[i].t_min);
         }
         if(input[2]){
-            printf("%04.1lf  ", cdata[i].t_max);
+            printf(COLOR1);printf("T_MAX:");printf(RESET);printf("%04.1lf  ",cdata[i].t_max);
             //Ausgabe ins outputfile
-            fprintf(output_f,"%04.1lf;  ", cdata[i].t_max);
+            fprintf(output_f,"%04.1lf; ",cdata[i].t_max);
         }
         if(input[3]){
-            printf("%04.1lf  ", cdata[i].niederschlag);
+            printf(COLOR1);printf("RR:");printf(RESET);printf("%04.1lf  ",cdata[i].niederschlag);
             //Ausgabe ins outputfile
-            fprintf(output_f,"%04.1lf;  ", cdata[i].niederschlag);
+            fprintf(output_f,"%04.1lf; ",cdata[i].niederschlag);
         }
         printf("\n");fprintf(output_f,"\n");
     }
@@ -628,6 +644,9 @@ int show_data(cdatas_t *cdata, int number_datasets, int total_runs, int *input){
     free(token);
     fclose(output_f);
     output_f = NULL;
+
+    //Ausgabe der erfolgreichen Ausgabe
+    printf("\033[1;32m");printf("\nDatei: %s zum Ausgaben der gefilterten Werte wurde erfolgreich erstellt!\n",filename);printf(RESET);
     return 0;
 }
 
@@ -645,7 +664,9 @@ int show_averaged_data(cdatas_t *cdata, filter_args_t *args,int number_datasets,
     strcat(filename,".txt");
 
     FILE *output_f = fopen(filename,"wb+");
-
+    if(input == NULL){
+        printf("\033[1;31m");printf("\nERROR: Fehler beim erstellen der Ausgabedatei der gefilterten Werte!\n");printf(RESET);
+    }
     //Initialisiere input buffer -> Benutzer eingabe
     for(int i = 0; i < 50; i++)buff[i] = '\0';
 
@@ -655,7 +676,10 @@ int show_averaged_data(cdatas_t *cdata, filter_args_t *args,int number_datasets,
     printf("|* monatsmittel                                                 |\n");
     printf("|* jahreszeit       -> Mittel ueber eine waehlbare Jahreszeit   |\n");
     printf("|* jahresmittel                                                 |\n");
-    printf("|* letzten X Jahre  -> Mittel ueber die jeweils letzten n Jahre |\n");
+    printf("|* letztenxjahre    -> Mittel ueber die jeweils letzten n Jahre |\n");
+    printf("|                                                               |\n");
+    printf("|Info: Option `letztenxjahre` muss in der datum filteroption    |\n");
+    printf("|abfrage festgelegt werden!                                     |\n");
     printf("+---------------------------------------------------------------+\n\n");
     printf("Eingabe: ");
 
@@ -668,7 +692,7 @@ int show_averaged_data(cdatas_t *cdata, filter_args_t *args,int number_datasets,
         if(strcmp(token,"monatsmittel")==0)input[0] = 1;
         if(strcmp(token,"jahreszeit")==0)input[1] = 1;
         if(strcmp(token,"jahresmittel")==0)input[2] = 1;
-        if(strcmp(token,"letzten")==0)input[3] = 1;
+        if(strcmp(token,"letztenxjahre")==0)input[3] = 1;
 
         token = strtok(NULL," ,\n\t");
     }
@@ -697,17 +721,23 @@ int show_averaged_data(cdatas_t *cdata, filter_args_t *args,int number_datasets,
     for(int i = 0; i <= number_datasets; i++)
     {
         if(chosen_cols[0]){
+            
             int yy = (int)cdata[i].datum/10000;
             int mm = ((int)cdata[i].datum - (yy * 10000)) / 100;
             int dd = ((int)cdata[i].datum - (yy * 10000) - (mm * 100));
-            if(((i + 1)%mod) == 0)printf("%02d-%02d-%4d  ", dd, mm, yy);
-            //Ausgabe ins outputfile
-            if(((i + 1)%mod) == 0)fprintf(output_f,"%02d-%02d-%4d;  ", dd, mm, yy);
+            if(((i + 1)%mod) == 0){
+                printf(COLOR1);printf("Datum: ");printf(RESET);
+                printf("%02d-%02d-%4d  ", dd, mm, yy);
+                //Ausgabe ins outputfile
+                fprintf(output_f,"%02d-%02d-%4d;  ", dd, mm, yy);
+            }
         }
         if(chosen_cols[1]){
             
             avrg_tmin += cdata[i].t_min;
             if(((i + 1)%mod) == 0){
+
+                printf(COLOR1);printf("T_MIN: ");printf(RESET);
                 printf("%04.1lf  ", avrg_tmin/(double)mod);
                 //Ausgabe ins outputfile
                 fprintf(output_f,"%04.1lf;  ", avrg_tmin/(double)mod);
@@ -718,6 +748,8 @@ int show_averaged_data(cdatas_t *cdata, filter_args_t *args,int number_datasets,
 
             avrg_tmax += cdata[i].t_max;
             if(((i + 1)%mod) == 0){
+
+                printf(COLOR1);printf("T_MAX: ");printf(RESET);
                 printf("%04.1lf  ", avrg_tmax/(double)mod);
                 //Ausgabe ins outputfile
                 fprintf(output_f,"%04.1lf;  ", avrg_tmax/(double)mod);
@@ -729,6 +761,8 @@ int show_averaged_data(cdatas_t *cdata, filter_args_t *args,int number_datasets,
 
             avrg_niederschlag += cdata[i].niederschlag;
             if(((i + 1)%mod) == 0){
+
+                printf(COLOR1);printf("RR: ");printf(RESET);
                 printf("%04.1lf  ", avrg_niederschlag/(double)mod);
                 //Ausgabe ins outputfile
                 fprintf(output_f,"%04.1lf;  ", avrg_niederschlag/(double)mod);
@@ -745,6 +779,8 @@ int show_averaged_data(cdatas_t *cdata, filter_args_t *args,int number_datasets,
     free(token);
     fclose(output_f);
     output_f = NULL;
+    //Ausgabe der erfolgreichen Ausgabe
+    printf("\033[1;32m");printf("\nDatei: %s zum Ausgaben der gefilterten Werte wurde erfolgreich erstellt!\n",filename);printf(RESET);
     return 0;
 }
 
@@ -1159,6 +1195,7 @@ int main(void){
 
     char run_condition = 'y';
     int total_runs = 0;
+    char filename[] = "input.csv";
 
     while(run_condition != 'n'){
 
@@ -1169,7 +1206,13 @@ int main(void){
         int filter_option[4] = {0,0,0,0};
 
         //Inputstream von der CSV datei erzeugen
-        FILE *input = fopen("input.csv","r");
+        FILE *input = fopen(filename,"r");
+        if(input == NULL){
+            printf("\033[1;31m");printf("\nERROR: Fehler beim Einlesen der Datei %s!\n",filename);printf(RESET);
+        }else{
+
+            printf("\033[1;32m");printf("\nDatei %s wurde erfolgreich gelesen!\n", filename);printf(RESET);
+        }
 
         //Anzahl Datensaetze ermitteln
         number_datasets = process_input(input, number_datasets,padding);
@@ -1204,7 +1247,9 @@ int main(void){
         total_runs++;
         while(show_data(cdata, number_datasets,total_runs, chosen_cols)!=0);
 
-        while(show_averaged_data(cdata, args, number_datasets, total_runs, chosen_cols) != 0);
+        printf("\n\nMoechten Sie eine Darstellung der Mittelwert? (y/n) ");
+        char avrg_condition = getchar();getchar();
+        while((show_averaged_data(cdata, args, number_datasets, total_runs, chosen_cols) != 0)&&(avrg_condition != 'n'));
 
         printf("\033[1;31m");printf("\n\nMoechten Sie die Anwendung wiederholen? (y/n) ");
         printf("\033[0m");
