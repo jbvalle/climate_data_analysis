@@ -1261,8 +1261,6 @@ int main(void){
         fclose(input);
         input = NULL;
         run_condition = getchar();getchar();
-
     }
-
     return 0;
 }
