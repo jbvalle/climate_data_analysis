@@ -301,7 +301,7 @@ void filter_tmax(cdatas_t *cdata, int *number_datasets, int filter_methode, doub
             break;
 
         default:
-            printf("ERROR: filter_tmin: invalid filter methode");
+            printf("ERROR: filter_tmax: invalid filter methode");
             break;
     }
 }
@@ -394,7 +394,7 @@ void filter_niederschlag(cdatas_t *cdata, int *number_datasets, int filter_metho
             break;
 
         default:
-            printf("ERROR: filter_tmin: invalid filter methode");
+            printf("ERROR: filter_niederschlag: invalid filter methode");
             break;
     }
 }
@@ -541,11 +541,10 @@ void filter_datum(cdatas_t *cdata, int *number_datasets, int filter_methode, int
     }
 }
 
-int show_data(cdatas_t *cdata, int number_datasets, int total_runs){
+int show_data(cdatas_t *cdata, int number_datasets, int total_runs, int *input){
 
     
     char *token, letter, buff[50], total_runs_str[3];
-    int input[] = {0,0,0,0};
 
     //Create File Stream according to number of program executions
     sprintf(total_runs_str, "%d", total_runs);
@@ -606,22 +605,22 @@ int show_data(cdatas_t *cdata, int number_datasets, int total_runs){
             int dd = ((int)cdata[i].datum - (yy * 10000) - (mm * 100));
             printf("%02d-%02d-%4d  ", dd, mm, yy);
             //Ausgabe ins outputfile
-            fprintf(output_f,"%02d-%02d-%4d  ", dd, mm, yy);
+            fprintf(output_f,"%02d-%02d-%4d;  ", dd, mm, yy);
         }
         if(input[1]){
             printf("%04.1lf  ", cdata[i].t_min);
             //Ausgabe ins outputfile
-            fprintf(output_f,"%04.1lf  ", cdata[i].t_min);
+            fprintf(output_f,"%04.1lf;  ", cdata[i].t_min);
         }
         if(input[2]){
             printf("%04.1lf  ", cdata[i].t_max);
             //Ausgabe ins outputfile
-            fprintf(output_f,"%04.1lf  ", cdata[i].t_max);
+            fprintf(output_f,"%04.1lf;  ", cdata[i].t_max);
         }
         if(input[3]){
             printf("%04.1lf  ", cdata[i].niederschlag);
             //Ausgabe ins outputfile
-            fprintf(output_f,"%04.1lf  ", cdata[i].niederschlag);
+            fprintf(output_f,"%04.1lf;  ", cdata[i].niederschlag);
         }
         printf("\n");fprintf(output_f,"\n");
     }
@@ -632,11 +631,127 @@ int show_data(cdatas_t *cdata, int number_datasets, int total_runs){
     return 0;
 }
 
+int show_averaged_data(cdatas_t *cdata, filter_args_t *args,int number_datasets, int total_runs, int *chosen_cols){
+
+    
+    char *token, letter, buff[50], total_runs_str[3];
+    int input[4] = {0, 0, 0, 0};
+    //Create File Stream according to number of program executions
+    sprintf(total_runs_str, "%d", total_runs);
+    char filename[50] = "climate_data_averged";
+    //filename <- anzahl durchlaeufe
+    strcat(filename,total_runs_str);
+    //filename <- .txt anhaengen
+    strcat(filename,".txt");
+
+    FILE *output_f = fopen(filename,"wb+");
+
+    //Initialisiere input buffer -> Benutzer eingabe
+    for(int i = 0; i < 50; i++)buff[i] = '\0';
+
+
+    printf("\n\n+---------------------------------------------------------------+\n");
+    printf("| Ausgabeoptionen:                                              |\n");
+    printf("|* monatsmittel                                                 |\n");
+    printf("|* jahreszeit       -> Mittel ueber eine waehlbare Jahreszeit   |\n");
+    printf("|* jahresmittel                                                 |\n");
+    printf("|* letzten X Jahre  -> Mittel ueber die jeweils letzten n Jahre |\n");
+    printf("+---------------------------------------------------------------+\n\n");
+    printf("Eingabe: ");
+
+    for(int i = 0; (letter = getchar()) != '\n';i++)buff[i] = letter;
+    
+    token = strtok(buff," ,\n\t");
+    
+    while(token != NULL){
+
+        if(strcmp(token,"monatsmittel")==0)input[0] = 1;
+        if(strcmp(token,"jahreszeit")==0)input[1] = 1;
+        if(strcmp(token,"jahresmittel")==0)input[2] = 1;
+        if(strcmp(token,"letzten")==0)input[3] = 1;
+
+        token = strtok(NULL," ,\n\t");
+    }
+    
+    //Ueberpruefen der eingabe
+    int x;
+    for(x = 0; x < 4; x++)if(input[x] == 1)break;
+    //Wenn keines der Optionen gewaehlt wurde returniere -1 zur fehlerbehandlung
+    if(x == 4){
+
+        printf("\033[1;31m");printf("\n\nERROR: Bitte geben sie eines der vorgegebenen Eingabeoptionen ein!\n\n");printf("\033[0m");
+        return -1;
+    }
+
+    double avrg_tmin = 0, avrg_tmax = 0, avrg_niederschlag = 0;
+    int mod;
+    //Monatsmittel.....alle 30  Tage
+    //Jahreszeit.......alle 90  Tage
+    //Jahresmittel.....alle 365 Tage
+    //letzten X Tage...nach X Tagen
+    if(input[0])mod = 30;
+    if(input[1])mod = 90;
+    if(input[2])mod = 365;
+    if(input[3])mod = args[0].arg1;
+
+    for(int i = 0; i <= number_datasets; i++)
+    {
+        if(chosen_cols[0]){
+            int yy = (int)cdata[i].datum/10000;
+            int mm = ((int)cdata[i].datum - (yy * 10000)) / 100;
+            int dd = ((int)cdata[i].datum - (yy * 10000) - (mm * 100));
+            if(((i + 1)%mod) == 0)printf("%02d-%02d-%4d  ", dd, mm, yy);
+            //Ausgabe ins outputfile
+            if(((i + 1)%mod) == 0)fprintf(output_f,"%02d-%02d-%4d;  ", dd, mm, yy);
+        }
+        if(chosen_cols[1]){
+            
+            avrg_tmin += cdata[i].t_min;
+            if(((i + 1)%mod) == 0){
+                printf("%04.1lf  ", avrg_tmin/(double)mod);
+                //Ausgabe ins outputfile
+                fprintf(output_f,"%04.1lf;  ", avrg_tmin/(double)mod);
+                avrg_tmin = 0;
+            }
+        }
+        if(chosen_cols[2]){
+
+            avrg_tmax += cdata[i].t_max;
+            if(((i + 1)%mod) == 0){
+                printf("%04.1lf  ", avrg_tmax/(double)mod);
+                //Ausgabe ins outputfile
+                fprintf(output_f,"%04.1lf;  ", avrg_tmax/(double)mod);
+                //Reset 
+                avrg_tmax = 0;
+            }
+        }
+        if(chosen_cols[3]){
+
+            avrg_niederschlag += cdata[i].niederschlag;
+            if(((i + 1)%mod) == 0){
+                printf("%04.1lf  ", avrg_niederschlag/(double)mod);
+                //Ausgabe ins outputfile
+                fprintf(output_f,"%04.1lf;  ", avrg_niederschlag/(double)mod);
+                //Reset 
+                avrg_niederschlag = 0;
+            }
+        }
+        if(((i + 1)%mod) == 0){
+            printf("\n");
+            fprintf(output_f,"\n");
+        } 
+    }
+
+    free(token);
+    fclose(output_f);
+    output_f = NULL;
+    return 0;
+}
 
 int request_datum_args(filter_args_t *args){
 
     
-    char letter, buff[50], key[5];
+    char letter, buff[50], temp[50],key[5];
     //Variablen fuer die eingabe eines zeitraums
     int dd1,mm1,yy1;
     int dd2,mm2,yy2;
@@ -665,6 +780,9 @@ int request_datum_args(filter_args_t *args){
     //Zeichenweises einlesen
     for(int i = 0; (letter = getchar()) != '\n';i++)buff[i] = letter;
 
+    //buff auf temp uebergeben um string korruption von sscanf zu vermeiden
+    strcpy(temp, buff);
+
     //Einlesen vom schluesselwort zur fallunterscheidung
     sscanf(buff,"%s",key);
 
@@ -675,7 +793,7 @@ int request_datum_args(filter_args_t *args){
     if(strcmp(key, "datum")==0){
         
         //Entspricht filtermethode 2 filter_datum(2,limit1,limit2)
-        sscanf(buff, "%s %d.%d.%d - %d.%d.%d", dump,&dd1, &mm1, &yy1,&dd2,&mm2,&yy2);
+        sscanf(temp, "%s %d.%d.%d - %d.%d.%d", dump,&dd1, &mm1, &yy1,&dd2,&mm2,&yy2);
         //Filtermethode 2 weahlen
         args[0].method = 2;
         //mm,dd,yy in das format YYYYMMDD umwandeln
@@ -688,7 +806,7 @@ int request_datum_args(filter_args_t *args){
     if(strcmp(key, "bis")==0){
         
         //Entspricht filtermethode 0 filter_datum(0,limit1, 0)
-        sscanf(buff, "%s %d.%d.%d", dump,&dd1, &mm1, &yy1);
+        sscanf(temp, "%s %d.%d.%d", dump,&dd1, &mm1, &yy1);
         //Filtermethode 0 weahlen
         args[0].method = 0;
         //mm,dd,yy in das format YYYYMMDD umwandeln
@@ -698,7 +816,7 @@ int request_datum_args(filter_args_t *args){
 
     if(strcmp(key, "ab")   ==0){
         //Entspricht filtermethode 1 filter_datum(1,limit1,limit2)
-        sscanf(buff, "%s %d.%d.%d", dump,&dd1, &mm1, &yy1);
+        sscanf(temp, "%s %d.%d.%d", dump,&dd1, &mm1, &yy1);
         //Filtermethode 1 weahlen
         args[0].method = 1;
         //mm,dd,yy in das format YYYYMMDD umwandeln
@@ -710,7 +828,7 @@ int request_datum_args(filter_args_t *args){
 
         int last_x_days = 0;
         //Entspricht filtermethode 3 filter_datum(3,limit1,0)
-        sscanf(buff, "%s letzten %d Tage", dump, &last_x_days);
+        sscanf(temp, "%s letzten %d Tage", dump, &last_x_days);
         //Filtermethode 3 weahlen
         args[0].method = 3;
         args[0].arg1 = last_x_days;
@@ -723,7 +841,7 @@ int request_datum_args(filter_args_t *args){
 
         int last_x_days = 0;
         //Entspricht filtermethode 3 filter_datum(3,limit1,limit2)
-        sscanf(buff, "%s letzten %d Tage bis %d.%d.%d", dump, &last_x_days, &dd1, &mm1, &yy1);
+        sscanf(temp, "%s letzten %d Tage bis %d.%d.%d", dump, &last_x_days, &dd1, &mm1, &yy1);
 
         //Filtermethode 3 weahlen
         args[0].method = 3;
@@ -741,7 +859,7 @@ int request_datum_args(filter_args_t *args){
 int request_t_min_args(filter_args_t *args){
 
     
-    char letter, buff[50], key[5];
+    char letter, buff[50], temp[50],key[5];
     //Variablen fuer die eingabe eines zeitraums
     double limit1, limit2;
 
@@ -765,6 +883,9 @@ int request_t_min_args(filter_args_t *args){
     //Zeichenweises einlesen
     for(int i = 0; (letter = getchar()) != '\n';i++)buff[i] = letter;
 
+    //buff auf temp uebergeben um string korruption von sscanf zu vermeiden
+    strcpy(temp, buff);
+
     //Einlesen vom schluesselwort zur fallunterscheidung
     sscanf(buff,"%s",key);
 
@@ -775,7 +896,7 @@ int request_t_min_args(filter_args_t *args){
     if(strcmp(key, "t_min")==0){
         
         //Entspricht filtermethode 2 filter_t_min(2,limit1,limit2)
-        sscanf(buff, "%s %lf - %lf", dump, &limit1, &limit2);
+        sscanf(temp, "%s %lf - %lf", dump, &limit1, &limit2);
         //Filtermethode 2 weahlen
         args[1].method = 2;
         args[1].arg1 = limit1;
@@ -787,7 +908,7 @@ int request_t_min_args(filter_args_t *args){
     if(strcmp(key, "bis")==0){
         
         //Entspricht filtermethode 0 filter_tmin(0,limit1, 0)
-        sscanf(buff, "%s %lf", dump, &limit1);
+        sscanf(temp, "%s %lf", dump, &limit1);
         //Filtermethode 0 weahlen
         args[1].method = 0;
         args[1].arg1 = limit1;
@@ -796,7 +917,7 @@ int request_t_min_args(filter_args_t *args){
 
     if(strcmp(key, "ab")   ==0){
         //Entspricht filtermethode 1 filter_tmin(1,limit1,limit2)
-        sscanf(buff, "%s %lf", dump, &limit1);
+        sscanf(temp, "%s %lf", dump, &limit1);
         //Filtermethode 1 weahlen
         args[1].method = 1;
         args[1].arg1 = limit1;
@@ -811,7 +932,7 @@ int request_t_min_args(filter_args_t *args){
 int request_t_max_args(filter_args_t *args){
 
     
-    char letter, buff[50], key[5];
+    char letter, buff[50], temp[50],key[5];
     //Variablen fuer die eingabe eines zeitraums
     double limit1, limit2;
 
@@ -835,6 +956,9 @@ int request_t_max_args(filter_args_t *args){
     //Zeichenweises einlesen
     for(int i = 0; (letter = getchar()) != '\n';i++)buff[i] = letter;
 
+    //buff auf temp uebergeben um string korruption von sscanf zu vermeiden
+    strcpy(temp, buff);
+
     //Einlesen vom schluesselwort zur fallunterscheidung
     sscanf(buff,"%s",key);
 
@@ -845,7 +969,7 @@ int request_t_max_args(filter_args_t *args){
     if(strcmp(key, "t_max")==0){
         
         //Entspricht filtermethode 2 filter_t_max(2,limit1,limit2)
-        sscanf(buff, "%s %lf - %lf", dump, &limit1, &limit2);
+        sscanf(temp, "%s %lf - %lf", dump, &limit1, &limit2);
         //Filtermethode 2 weahlen
         args[2].method = 2;
         args[2].arg1 = limit1;
@@ -857,7 +981,7 @@ int request_t_max_args(filter_args_t *args){
     if(strcmp(key, "bis")==0){
         
         //Entspricht filtermethode 0 filter_tmax(0,limit1, 0)
-        sscanf(buff, "%s %lf", dump, &limit1);
+        sscanf(temp, "%s %lf", dump, &limit1);
         //Filtermethode 0 weahlen
         args[2].method = 0;
         args[2].arg1 = limit1;
@@ -866,7 +990,7 @@ int request_t_max_args(filter_args_t *args){
 
     if(strcmp(key, "ab")   ==0){
         //Entspricht filtermethode 1 filter_tmax(1,limit1,limit2)
-        sscanf(buff, "%s %lf", dump, &limit1);
+        sscanf(temp, "%s %lf", dump, &limit1);
         //Filtermethode 1 weahlen
         args[2].method = 1;
         args[2].arg1 = limit1;
@@ -881,7 +1005,7 @@ int request_t_max_args(filter_args_t *args){
 int request_niederschlag_args(filter_args_t *args){
 
     
-    char letter, buff[50], key[5];
+    char letter, buff[50], temp[50],key[5];
     //Variablen fuer die eingabe eines zeitraums
     double limit1, limit2;
 
@@ -905,6 +1029,9 @@ int request_niederschlag_args(filter_args_t *args){
     //Zeichenweises einlesen
     for(int i = 0; (letter = getchar()) != '\n';i++)buff[i] = letter;
 
+    //buff auf temp uebergeben um string korruption von sscanf zu vermeiden
+    strcpy(temp, buff);
+
     //Einlesen vom schluesselwort zur fallunterscheidung
     sscanf(buff,"%s",key);
 
@@ -915,7 +1042,7 @@ int request_niederschlag_args(filter_args_t *args){
     if(strcmp(key, "niederschlag")==0){
         
         //Entspricht filtermethode 2 filter_niederschlag(2,limit1,limit2)
-        sscanf(buff, "%s %lf - %lf", dump, &limit1, &limit2);
+        sscanf(temp, "%s %lf - %lf", dump, &limit1, &limit2);
         //Filtermethode 2 weahlen
         args[3].method = 2;
         args[3].arg1 = limit1;
@@ -927,7 +1054,7 @@ int request_niederschlag_args(filter_args_t *args){
     if(strcmp(key, "bis")==0){
         
         //Entspricht filtermethode 0 filter_niederschlag(0,limit1, 0)
-        sscanf(buff, "%s %lf", dump, &limit1);
+        sscanf(temp, "%s %lf", dump, &limit1);
         //Filtermethode 0 weahlen
         args[3].method = 0;
         args[3].arg1 = limit1;
@@ -936,7 +1063,7 @@ int request_niederschlag_args(filter_args_t *args){
 
     if(strcmp(key, "ab")   ==0){
         //Entspricht filtermethode 1 filter_niederschlag(1,limit1,limit2)
-        sscanf(buff, "%s %lf", dump, &limit1);
+        sscanf(temp, "%s %lf", dump, &limit1);
         //Filtermethode 1 weahlen
         args[3].method = 1;
         args[3].arg1 = limit1;
@@ -1071,8 +1198,13 @@ int main(void){
         if(filter_option[3])filter_niederschlag(cdata, &number_datasets, args[3].method, args[3].arg1, args[3].arg2);
         
         //Wiederhole die Anfrage solange bis return wert 0 bei gueltiger eingabe
+        //
+        int chosen_cols[] = {0,0,0,0};
+
         total_runs++;
-        while(show_data(cdata, number_datasets,total_runs)!=0);
+        while(show_data(cdata, number_datasets,total_runs, chosen_cols)!=0);
+
+        while(show_averaged_data(cdata, args, number_datasets, total_runs, chosen_cols) != 0);
 
         printf("\033[1;31m");printf("\n\nMoechten Sie die Anwendung wiederholen? (y/n)\n\n");
         printf("\033[0m");
@@ -1089,4 +1221,3 @@ int main(void){
 
     return 0;
 }
-
