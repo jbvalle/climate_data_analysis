@@ -140,7 +140,7 @@ void filter_tmin(cdatas_t *cdata, int *number_datasets, int filter_methode, doub
                 }
             }
             
-            *number_datasets = new_index - 1;
+            *number_datasets = new_index;
 
             while(new_index < temp_num_datasets)
             {
@@ -167,7 +167,7 @@ void filter_tmin(cdatas_t *cdata, int *number_datasets, int filter_methode, doub
                 }
             }
 
-            *number_datasets = new_index - 1;
+            *number_datasets = new_index;
 
             while(new_index < temp_num_datasets)
             {
@@ -191,7 +191,7 @@ void filter_tmin(cdatas_t *cdata, int *number_datasets, int filter_methode, doub
                     new_index++;
                 }
             }
-            *number_datasets = new_index - 1;
+            *number_datasets = new_index;
 
             while(new_index < temp_num_datasets)
             {
@@ -236,7 +236,7 @@ void filter_tmax(cdatas_t *cdata, int *number_datasets, int filter_methode, doub
                 }
             }
             //Restliche "Leere Datensätze" mit 0 auffüllen
-            *number_datasets = new_index - 1;
+            *number_datasets = new_index;
 
             while(new_index < temp_num_datasets)
             {
@@ -262,7 +262,7 @@ void filter_tmax(cdatas_t *cdata, int *number_datasets, int filter_methode, doub
                 }
             }
             //Restliche "Leere Datensätze" mit 0 auffüllen
-            *number_datasets = new_index - 1;
+            *number_datasets = new_index;
 
             while(new_index < temp_num_datasets)
             {
@@ -288,7 +288,7 @@ void filter_tmax(cdatas_t *cdata, int *number_datasets, int filter_methode, doub
                 }
             }
             //Restliche "Leere Datensätze" mit 0 auffüllen
-            *number_datasets = new_index - 1;
+            *number_datasets = new_index ;
 
             while(new_index < temp_num_datasets)
             {
@@ -329,7 +329,7 @@ void filter_niederschlag(cdatas_t *cdata, int *number_datasets, int filter_metho
                 }
             }
             //Restliche "Leere Datensätze" mit 0 auffüllen
-            *number_datasets = new_index - 1;
+            *number_datasets = new_index;
 
             while(new_index < temp_num_datasets)
             {
@@ -355,7 +355,7 @@ void filter_niederschlag(cdatas_t *cdata, int *number_datasets, int filter_metho
                 }
             }
             //Restliche "Leere Datensätze" mit 0 auffüllen
-            *number_datasets = new_index - 1;
+            *number_datasets = new_index ;
 
             while(new_index < temp_num_datasets)
             {
@@ -381,7 +381,7 @@ void filter_niederschlag(cdatas_t *cdata, int *number_datasets, int filter_metho
                 }
             }
             //Restliche "Leere Datensätze" mit 0 auffüllen
-            *number_datasets = new_index - 1;
+            *number_datasets = new_index;
 
             while(new_index < temp_num_datasets)
             {
@@ -422,7 +422,7 @@ void filter_datum(cdatas_t *cdata, int *number_datasets, int filter_methode, int
                 }
             }
             //Restliche "Leere Datensätze" mit 0 auffüllen
-            *number_datasets = new_index - 1;
+            *number_datasets = new_index;
 
             while(new_index < temp_num_datasets)
             {
@@ -448,7 +448,7 @@ void filter_datum(cdatas_t *cdata, int *number_datasets, int filter_methode, int
                 }
             }
             //Restliche "Leere Datensätze" mit 0 auffüllen
-            *number_datasets = new_index - 1;
+            *number_datasets = new_index;
 
             while(new_index < temp_num_datasets)
             {
@@ -482,7 +482,7 @@ void filter_datum(cdatas_t *cdata, int *number_datasets, int filter_methode, int
             //printf(Der Mittel von Zeitraum: XX -YYY : %d,avrg);
             //
             //Restliche "Leere Datensätze" mit 0 auffüllen
-            *number_datasets = new_index - 1;
+            *number_datasets = new_index;
 
             while(new_index < temp_num_datasets)
             {
@@ -523,7 +523,7 @@ void filter_datum(cdatas_t *cdata, int *number_datasets, int filter_methode, int
             //printf(Der Mittel von Zeitraum: XX -YYY : %d,avrg);
             //
             //Restliche "Leere Datensätze" mit 0 auffüllen
-            *number_datasets = new_index - 1;
+            *number_datasets = new_index;
 
             while(new_index < temp_num_datasets)
             {
@@ -613,7 +613,7 @@ int show_data(cdatas_t *cdata, int number_datasets, int total_runs, int *input){
         return -1;
     }
 
-    for(int i = 0; i <= number_datasets; i++)
+    for(int i = 0; i < number_datasets; i++)
     {
         if(input[0]){
             int yy = (int)cdata[i].datum/10000;
