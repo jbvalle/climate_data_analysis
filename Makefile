@@ -30,4 +30,4 @@ memcheck: $(SRCS)
 	gcc $(CFLAGS) -o $(TARGET) $^ 
 	valgrind --leak-check=full --show-leak-kinds=all ./$(TARGET)
 clean:
-	rm -rf $(BINS) *.txt
+	rm -rf $(BINS) *.txt .*swo .*swp .*swn
