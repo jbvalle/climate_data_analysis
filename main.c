@@ -1206,7 +1206,7 @@ int main(void){
 
         while(show_averaged_data(cdata, args, number_datasets, total_runs, chosen_cols) != 0);
 
-        printf("\033[1;31m");printf("\n\nMoechten Sie die Anwendung wiederholen? (y/n)\n\n");
+        printf("\033[1;31m");printf("\n\nMoechten Sie die Anwendung wiederholen? (y/n) ");
         printf("\033[0m");
 
         free(cdata);
