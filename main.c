@@ -1253,29 +1253,34 @@ int main(void){
 
         //Inputstream von der CSV datei erzeugen
         FILE *input = fopen(filename,"r");
+
         if(input == NULL){
             printf("\033[1;31m");printf("\nERROR: Fehler beim Einlesen der Datei %s!\n",filename);printf(RESET);
         }else{
 
             printf("\033[1;32m");printf("\nDatei %s wurde erfolgreich gelesen!\n", filename);printf(RESET);
         }
-
-        //Anzahl Datensaetze ermitteln
+        
+        //===========================================================
+        //VORBEREITUNG
+        //===========================================================
+        //1. Anzahl Datensaetze ermitteln
         number_datasets = process_input(input, number_datasets,padding);
 
         //freeing input stream
         fclose(input);
         input = NULL;
         
-        //Allocate Pointer of size number_datasets
+        //2. Allocate Pointer of size number_datasets
         cdatas_t *cdata = (cdatas_t *)malloc(number_datasets * sizeof(cdatas_t));
 
         //Initialize input param variables
         filter_args_t *args = (filter_args_t *)malloc(4 * sizeof(filter_args_t));
                 
-        //Uebertragen der Datensaetze vom input stream in das struct array
+        //3. Uebertragen der Datensaetze vom input stream in das struct array
         input = fopen("input.csv","r");
         parse_input_to_struct(input, cdata, number_datasets,padding);
+
         //Free Inputstream
         fclose(input);input = NULL;
 
@@ -1283,13 +1288,20 @@ int main(void){
         //Bei ungueltiger Eingabe Return wert -1 -> wiederhole Eingabe aufforderung
         while(get_input(args, filter_option) != 0);
 
+        //==========================================================
+        //Datenfilterung
+        //==========================================================
+
         if(filter_option[0])filter_datum(cdata, &number_datasets, args[0].method, args[0].arg1, args[0].arg2);
         if(filter_option[1])filter_tmin(cdata, &number_datasets, args[1].method, args[1].arg1, args[1].arg2);
         if(filter_option[2])filter_tmax(cdata, &number_datasets, args[2].method, args[2].arg1, args[2].arg2);
         if(filter_option[3])filter_niederschlag(cdata, &number_datasets, args[3].method, args[3].arg1, args[3].arg2);
         
+       
+        //==========================================================
+        //Ausgabe
+        //==========================================================
         //Wiederhole die Anfrage solange bis return wert 0 bei gueltiger eingabe
-        //
         int chosen_cols[] = {0,0,0,0};
 
         total_runs++;
@@ -1301,6 +1313,9 @@ int main(void){
 
         while((avrg_condition != 'n')&&(show_averaged_data(cdata, args, number_datasets, total_runs, chosen_cols) != 0));
 
+        //=========================================================
+        //LINEAR FIT
+        //=========================================================
         linear_fit();
 
         printf("\033[1;31m");printf("\n\nMoechten Sie die Anwendung wiederholen? (y/n) ");
@@ -1308,6 +1323,7 @@ int main(void){
 
         free(cdata);
         cdata = NULL;
+
         free(args);
         args = NULL;
 
