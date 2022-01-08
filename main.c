@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <string.h>
 #define COLOR1 "\033[1;34m"
 #define RESET "\033[0m"
@@ -23,6 +24,13 @@ typedef struct {
     double arg1;
     double arg2;
 }filter_args_t;
+
+typedef struct{
+
+    double a;
+    double b;
+}linearfit_const_t;
+
 
 int process_input(FILE *input, int number_datasets, int padding){
     
@@ -760,7 +768,7 @@ int show_averaged_data(cdatas_t *cdata, filter_args_t *args,int number_datasets,
         if(chosen_cols[3]){
 
             avrg_niederschlag += cdata[i].niederschlag;
-            if(((i + 1)%mod) == 0){
+            if(((i + 1)%(mod)) == 0){
 
                 printf(COLOR1);printf("RR: ");printf(RESET);
                 printf("%04.1lf  ", avrg_niederschlag/(double)mod);
@@ -1189,6 +1197,44 @@ int get_input(filter_args_t *args, int *filter_option){
     return 0;
 }
 
+void linear_fit(){
+
+    char filename[50] = "linear_fit.txt";
+
+    FILE *output_linear_fit = fopen(filename,"wb+");
+
+    if(output_linear_fit == NULL){
+        printf("\033[1;31m");printf("\nERROR: Fehler beim erstellen der Ausgabedatei der gefilterten Werte!\n");printf(RESET);
+    }
+
+    int i, s;
+    double x_mittel=4.5, sumX2=82.5;
+    double y_t_min=7.4, y_t_max=15.6, y_rr=1.8;
+    double b_t_min=1.15/sumX2, b_t_max=-2.3/sumX2, b_rr=7.25/sumX2;
+    double a_t_min = y_t_min - b_t_min * x_mittel, a_t_max = y_t_max - b_t_max * x_mittel, a_rr = y_rr - b_rr * x_mittel; 
+
+    printf("\n\nGeben sie die Anzahl der Jahre an, über die gefittet werden soll:\n");
+    scanf("%d", &s);
+    getchar();
+
+    for(i=0; i<=s; i++){
+        double linear_fit_t_min = a_t_min + b_t_min*i;
+        double linear_fit_t_max = a_t_max + b_t_max*i;
+        double linear_fit_rr = a_rr + b_rr*i;
+        printf("%4d ", 2009+i);
+        fprintf(output_linear_fit,"%4d ", 2009+i);
+
+        printf("%04f ", linear_fit_t_min);
+        fprintf(output_linear_fit,"%04f ", linear_fit_t_min);
+
+        printf("%04f ", linear_fit_t_max);
+        fprintf(output_linear_fit,"%04f ", linear_fit_t_max);
+
+        printf("%04f\n", linear_fit_rr);
+        fprintf(output_linear_fit,"%04f\n", linear_fit_rr);    
+    }
+     
+}
 
 int main(void){
     
@@ -1230,6 +1276,8 @@ int main(void){
         //Uebertragen der Datensaetze vom input stream in das struct array
         input = fopen("input.csv","r");
         parse_input_to_struct(input, cdata, number_datasets,padding);
+        //Free Inputstream
+        fclose(input);input = NULL;
 
         //Wenn User eingabe Korrekt dann get_input() == 0
         //Bei ungueltiger Eingabe Return wert -1 -> wiederhole Eingabe aufforderung
@@ -1248,8 +1296,12 @@ int main(void){
         while(show_data(cdata, number_datasets,total_runs, chosen_cols)!=0);
 
         printf("\n\nMoechten Sie eine Darstellung der Mittelwert? (y/n) ");
+
         char avrg_condition = getchar();getchar();
-        while((show_averaged_data(cdata, args, number_datasets, total_runs, chosen_cols) != 0)&&(avrg_condition != 'n'));
+
+        while((avrg_condition != 'n')&&(show_averaged_data(cdata, args, number_datasets, total_runs, chosen_cols) != 0));
+
+        linear_fit();
 
         printf("\033[1;31m");printf("\n\nMoechten Sie die Anwendung wiederholen? (y/n) ");
         printf("\033[0m");
@@ -1258,9 +1310,9 @@ int main(void){
         cdata = NULL;
         free(args);
         args = NULL;
-        fclose(input);
-        input = NULL;
+
         run_condition = getchar();getchar();
     }
+
     return 0;
 }
