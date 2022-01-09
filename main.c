@@ -707,7 +707,7 @@ int show_averaged_data(cdatas_t *cdata, filter_args_t *args,int number_datasets,
 
 
     printf("\n\n+---------------------------------------------------------------+\n");
-    printf("| Ausgabeoptionen:                                              |\n");
+    printf("| Ausgabeoptionen: (Anzahl der Datensaetze: %5d               |\n", number_datasets);
     printf("|* monatsmittel                                                 |\n");
     printf("|* jahreszeit       -> Mittel ueber eine waehlbare Jahreszeit   |\n");
     printf("|* jahresmittel                                                 |\n");
