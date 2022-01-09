@@ -846,7 +846,7 @@ int request_datum_args(filter_args_t *args){
     printf("| z.B. bis 01.01.1950                                               |\n");
     printf("| z.B. ab 10.10.2005                                                |\n");
     printf("| z.B. 1. letzten 50 Tage                                           |\n");
-    printf("| z.B. 2. letzten 100 Tage bis 10.10.2019                           |\n");
+    printf("| z.B. 2. letzten 100 Tage bis 10.10.2009                           |\n");
     printf("| z.B. 3. letzten 10 Jahre                                          |\n");
     printf("+-------------------------------------------------------------------+\n\n");
     printf("Eingabe: ");
