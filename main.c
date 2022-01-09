@@ -544,6 +544,33 @@ void filter_datum(cdatas_t *cdata, int *number_datasets, int filter_methode, int
             }
             break;
 
+        case 4:
+            //Die letzten X JAHRE
+            
+            //void filter_datum(cdatas_t *cdata, int *number_datasets, int filter_methode, int datum_limit1, int datum_limit2);
+
+            for(int i = *number_datasets - (datum_limit1*365) + 1; i < *number_datasets; i++)
+            {
+                cdata[new_index].datum = cdata[i].datum;
+                cdata[new_index].t_min = cdata[i].t_min;
+                cdata[new_index].t_max = cdata[i].t_max;
+                cdata[new_index].niederschlag = cdata[i].niederschlag;
+                new_index++;
+            }
+            
+            //Restliche "Leere Datensätze" mit 0 auffüllen
+            *number_datasets = new_index;
+
+            while(new_index < temp_num_datasets)
+            {
+                cdata[new_index].datum = 0;
+                cdata[new_index].t_min = 0;
+                cdata[new_index].t_max = 0;
+                cdata[new_index].niederschlag = 0;
+                new_index++;
+
+            }
+            break;
         default:
             printf("ERROR: filter_tmin: invalid filter methode");
             break;
@@ -724,7 +751,7 @@ int show_averaged_data(cdatas_t *cdata, filter_args_t *args,int number_datasets,
     if(input[0])mod = 30;
     if(input[1])mod = 90;
     if(input[2])mod = 365;
-    if(input[3])mod = args[0].arg1;
+    if(input[3])mod = args[0].arg1 * 365;
 
     for(int i = 0; i <= number_datasets; i++)
     {
@@ -812,12 +839,15 @@ int request_datum_args(filter_args_t *args){
     printf("|* ab TT.MM.JJJJ                         ->alle Daten ab  ...       |\n");
     printf("|* 1. letzten X Tage                                                |\n");
     printf("|* 2. letzten X Tage bis TT.MM.JJJJ                                 |\n");
+    printf("|* 3. letzten X Jahre  -> Diese Filteroption waehlen fuer           |\n");
+    printf("|                         `letztenxjahre` der Mittelwert Berechnung |\n");
     printf("|                                                                   |\n");
     printf("| z.B. datum 01.01.1995 - 01.01.2000                                |\n");
     printf("| z.B. bis 01.01.1950                                               |\n");
     printf("| z.B. ab 10.10.2005                                                |\n");
     printf("| z.B. 1. letzten 50 Tage                                           |\n");
     printf("| z.B. 2. letzten 100 Tage bis 10.10.2019                           |\n");
+    printf("| z.B. 3. letzten 10 Jahre                                          |\n");
     printf("+-------------------------------------------------------------------+\n\n");
     printf("Eingabe: ");
 
@@ -892,6 +922,19 @@ int request_datum_args(filter_args_t *args){
         args[0].arg1 = last_x_days;
         //zweites argument wichtig! Ansonsten erwartet das Programm ein limit2
         args[0].arg2 = (yy1 * 10000 + mm1 * 100 + dd1);
+        return 0;
+    }
+
+    if(strcmp(key, "3.")==0){
+
+        int last_x_years = 0;
+        //Entspricht filtermethode 3 filter_datum(3,limit1,0)
+        sscanf(temp, "%s letzten %d Jahre", dump, &last_x_years);
+        //Filtermethode 3 weahlen
+        args[0].method = 4;
+        args[0].arg1 = last_x_years;
+        //zweites argument wichtig! Ansonsten erwartet das Programm ein limit2
+        args[0].arg2 = 0;
         return 0;
     }
 
@@ -987,7 +1030,7 @@ int request_t_max_args(filter_args_t *args){
     printf("| Filterung nach tmax:                                              |\n");
     printf("|                                                                   |\n");
     printf("| Bitte waehlen Sie eines der moeglichen Filtermethoden aus:        |\n");
-    printf("|* t_max XX - YY           ->Filterung eines tmax Bereichs          |\n");
+    printf("|* t_max XX - YY             ->Filterung eines tmax Bereichs        |\n");
     printf("|* bis YY                    ->alle Daten bis ...                   |\n"); 
     printf("|* ab XX                     ->alle Daten ab  ...                   |\n");
     printf("|                                                                   |\n");
